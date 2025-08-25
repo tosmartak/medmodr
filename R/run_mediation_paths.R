@@ -101,7 +101,7 @@ run_mediation_paths <- function(
           ctrl <- ctrl[ctrl %in% names(data)]
         }
 
-        needed <- unique(na.omit(c(tr, med, y, ctrl)))
+        needed <- unique(stats::na.omit(c(tr, med, y, ctrl)))
         missing <- setdiff(needed, names(data))
         if (length(missing)) {
           message("[WARN] Missing variables: ", paste(missing, collapse = ", "), " -> skipping")

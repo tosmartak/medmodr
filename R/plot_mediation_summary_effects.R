@@ -10,51 +10,48 @@
 #' @return A ggplot object.
 #' @export
 plot_mediation_summary_effects <- function(summary_table, filter_significant = FALSE, show_only_acme = FALSE) {
-  if (!requireNamespace("ggplot2", quietly = TRUE)) stop("Package 'ggplot2' is required.", call. = FALSE)
-  if (!requireNamespace("tidyr", quietly = TRUE)) stop("Package 'tidyr' is required.", call. = FALSE)
-  if (!requireNamespace("dplyr", quietly = TRUE)) stop("Package 'dplyr' is required.", call. = FALSE)
-
+  # These are in Imports now, so no guards needed
   data <- summary_table
   if (isTRUE(filter_significant)) {
-    data <- dplyr::filter(data, .data$Has_Mediation %in% TRUE)
+    data <- dplyr::filter(data, Has_Mediation %in% TRUE)
   }
 
   data_long <- data |>
     tidyr::pivot_longer(
-      cols = c(.data$ACME, .data$ADE, .data$Total_Effect),
+      cols = c("ACME", "ADE", "Total_Effect"),
       names_to = "Effect",
       values_to = "Estimate"
     ) |>
     dplyr::mutate(
-      Effect = dplyr::recode(.data$Effect, "Total_Effect" = "Total Effect"),
+      Effect = dplyr::recode(Effect, "Total_Effect" = "Total Effect"),
       CI_Lower = dplyr::case_when(
-        .data$Effect == "ACME" ~ .data$ACME_CI_Lower,
-        .data$Effect == "ADE" ~ .data$ADE_CI_Lower,
-        .data$Effect == "Total Effect" ~ .data$Total_Effect_CI_Lower
+        Effect == "ACME" ~ ACME_CI_Lower,
+        Effect == "ADE" ~ ADE_CI_Lower,
+        Effect == "Total Effect" ~ Total_Effect_CI_Lower
       ),
       CI_Upper = dplyr::case_when(
-        .data$Effect == "ACME" ~ .data$ACME_CI_Upper,
-        .data$Effect == "ADE" ~ .data$ADE_CI_Upper,
-        .data$Effect == "Total Effect" ~ .data$Total_Effect_CI_Upper
+        Effect == "ACME" ~ ACME_CI_Upper,
+        Effect == "ADE" ~ ADE_CI_Upper,
+        Effect == "Total Effect" ~ Total_Effect_CI_Upper
       ),
       Sig = dplyr::case_when(
-        .data$Effect == "ACME" ~ .data$ACME_p < 0.05,
-        .data$Effect == "ADE" ~ .data$ADE_p < 0.05,
-        .data$Effect == "Total Effect" ~ .data$Total_Effect_p < 0.05
+        Effect == "ACME" ~ ACME_p < 0.05,
+        Effect == "ADE" ~ ADE_p < 0.05,
+        Effect == "Total Effect" ~ Total_Effect_p < 0.05
       ),
-      Group = paste(.data$Treatment, "->", .data$Mediator)
+      Group = paste(Treatment, "->", Mediator)
     )
 
   if (isTRUE(show_only_acme)) {
-    data_long <- dplyr::filter(data_long, .data$Effect == "ACME")
+    data_long <- dplyr::filter(data_long, Effect == "ACME")
   }
 
   ggplot2::ggplot(
     data_long,
-    ggplot2::aes(x = .data$Effect, y = .data$Estimate, ymin = .data$CI_Lower, ymax = .data$CI_Upper, color = .data$Effect)
+    ggplot2::aes(x = Effect, y = Estimate, ymin = CI_Lower, ymax = CI_Upper, color = Effect)
   ) +
     ggplot2::geom_pointrange(position = ggplot2::position_dodge(width = 0.5), linewidth = 1.1) +
-    ggplot2::facet_grid(rows = ggplot2::vars(.data$Outcome), cols = ggplot2::vars(.data$Group), scales = "free") +
+    ggplot2::facet_grid(rows = ggplot2::vars(Outcome), cols = ggplot2::vars(Group), scales = "free") +
     ggplot2::geom_hline(yintercept = 0, linetype = "dashed") +
     ggplot2::scale_color_manual(values = c("ACME" = "#1b9e77", "ADE" = "#d95f02", "Total Effect" = "#7570b3")) +
     ggplot2::theme_minimal(base_size = 14) +
