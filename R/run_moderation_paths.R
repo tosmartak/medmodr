@@ -121,7 +121,7 @@ run_moderation_paths <- function(
         model <- tryCatch(
           stats::lm(fml, data = data, na.action = stats::na.exclude),
           error = function(e) {
-            message("[WARN] Model failed for: ", x, " × ", m, " → ", y, " : ", e$message)
+            message("[WARN] Model failed for: ", x, "  x  ", m, "  ->  ", y, " : ", e$message)
             return(NULL)
           }
         )
@@ -170,20 +170,20 @@ run_moderation_paths <- function(
         # Optional plotting for significant interactions
         if (plot_sig && has_any_sig) {
           if (!requireNamespace("interactions", quietly = TRUE)) {
-            message("ℹ Skipping plot: package 'interactions' not installed.")
+            message("[INFO] Skipping plot: package 'interactions' not installed.")
           } else {
-            message("[PLOT] Plotting: ", x, " × ", m, " → ", y)
+            message("[PLOT] Plotting: ", x, "  x  ", m, "  ->  ", y)
             tryCatch(
               {
                 if (is.factor(data[[x]])) {
                   p <- interactions::cat_plot(
                     model = model, pred = x, modx = m, data = data,
-                    plot.points = FALSE, main.title = paste0(x, " × ", m, " → ", y)
+                    plot.points = FALSE, main.title = paste0(x, "  x  ", m, "  ->  ", y)
                   )
                 } else {
                   p <- interactions::interact_plot(
                     model = model, pred = x, modx = m, data = data,
-                    plot.points = FALSE, main.title = paste0(x, " × ", m, " → ", y)
+                    plot.points = FALSE, main.title = paste0(x, "  x  ", m, "  ->  ", y)
                   )
                 }
                 print(p)
