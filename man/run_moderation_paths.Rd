@@ -41,13 +41,13 @@ Any controls that duplicate the current predictor or moderator are dropped per m
 }
 \value{
 A tibble with one row per interaction term (or one per model if
-\code{summarize_categorical = TRUE}) and columns:
-\itemize{
-\item \code{Predictor}, \code{Moderator}, \code{Outcome}, \code{Term}
-\item \code{Interaction_Effect}, \code{Std_Error}, \code{T_value}, \code{P_value}
-\item \code{CI_Lower}, \code{CI_Upper}
-\item \code{Has_Moderation} (logical; \code{P_value < sig_level})
-}
+  \code{summarize_categorical = TRUE}) and columns:
+  \itemize{
+    \item \code{Predictor}, \code{Moderator}, \code{Outcome}, \code{Term}
+    \item \code{Interaction_Effect}, \code{Std_Error}, \code{T_value}, \code{P_value}
+    \item \code{CI_Lower}, \code{CI_Upper}
+    \item \code{Has_Moderation} (logical; \code{P_value < sig_level})
+  }
 }
 \description{
 Fits linear models of the form \code{outcome ~ predictor * moderator + controls}

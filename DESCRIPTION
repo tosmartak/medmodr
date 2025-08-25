@@ -1,22 +1,26 @@
 Package: medmodr
-Title: What the Package Does (One Line, Title Case)
+Title: Mediation and Moderation Modeling Utilities for R
 Version: 0.0.0.9000
-Authors@R: 
-    person("First", "Last", , "first.last@example.com", role = c("aut", "cre"))
-Description: What the package does (one paragraph).
+Authors@R: person("Tosin", "Akingbemisilu", email = "you@example.com", role = c("aut", "cre"))
+Description: Helper functions to fit, summarize, visualize, and iterate mediation and moderation analyses.
 License: MIT + file LICENSE
 Encoding: UTF-8
-Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.2
-Suggests:
-    testthat (>= 3.0.0)
-Config/testthat/edition: 3
-Imports: 
-    dplyr,
-    stats,
-    tibble,
-    ggplot2,
-    interactions,
-    mediation,
-    tidyr
 Depends: R (>= 4.1.0)
+Imports:
+    stats,
+    tibble (>= 3.0.0),
+    dplyr (>= 1.0.0),
+    tidyr (>= 1.0.0),
+    ggplot2 (>= 3.3.0),
+    mediation
+Suggests:
+    interactions,
+    testthat (>= 3.0.0),
+    rmarkdown,
+    knitr,
+    pkgdown
+Config/testthat/edition: 3
+VignetteBuilder: knitr
+URL: https://tosmartak.github.io/medmodr, https://github.com/tosmartak/medmodr
+BugReports: https://github.com/tosmartak/medmodr/issues
+RoxygenNote: 7.3.2
