@@ -26,7 +26,7 @@ This is a basic example which shows you how to solve a common problem:
 if (requireNamespace("medmodr", quietly = TRUE)) {
   library(medmodr)
 } else if (requireNamespace("devtools", quietly = TRUE)) {
-  devtools::load_all(".")  # load your local package source
+  devtools::load_all(".") # load your local package source
 }
 #> ℹ Loading medmodr
 ## basic example code

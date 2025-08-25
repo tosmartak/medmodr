@@ -1,1 +1,3 @@
-test_that("package scaffolds", { expect_true(TRUE) })
+test_that("package scaffolds", {
+  expect_true(TRUE)
+})
