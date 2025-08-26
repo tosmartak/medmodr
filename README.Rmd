@@ -9,52 +9,177 @@ knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
   fig.path = "man/figures/README-",
-  out.width = "100%"
+  out.width = "100%",
+  message = FALSE,
+  warning = FALSE
 )
 ```
 
-# medmodr
+# medmodr Package: Iterated Moderation and Mediation at Scale
 
 <!-- badges: start -->
 [![R-CMD-check](https://github.com/tosmartak/medmodr/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/tosmartak/medmodr/actions/workflows/R-CMD-check.yaml)
 <!-- badges: end -->
 
-The goal of medmodr is to ...
+`medmodr` helps you systematically sweep through combinations of variables to detect:
+
+- **Moderation**: does a moderator change the effect of a predictor on an outcome?
+- **Mediation**: does a mediator transmit the effect of a treatment to an outcome?
+
+Instead of fitting models one by one, medmodr iterates across your variable sets and returns tidy summary tables you can filter, rank, and plot.
 
 ## Installation
 
-You can install the development version of medmodr from [GitHub](https://github.com/) with:
+`medmodr` requires `R >= 4.1.0`.
 
-``` r
+You can install the released version of **medmodr** from CRAN with:
+
+```{r install-cran, eval=FALSE}
+install.packages("medmodr")
+```
+
+And you can install the development version from GitHub with:
+
+```{r install-github, eval=FALSE}
 # install.packages("pak")
 pak::pak("tosmartak/medmodr")
+# or alternatively:
+# devtools::install_github("tosmartak/medmodr")
 ```
 
-## Example
+## Quick Start
+Load the package and access the demo dataset included:
 
-This is a basic example which shows you how to solve a common problem:
-
-```{r example}
-if (requireNamespace("medmodr", quietly = TRUE)) {
-  library(medmodr)
-} else if (requireNamespace("devtools", quietly = TRUE)) {
-  devtools::load_all(".") # load your local package source
-}
-## basic example code
+```{r setup-example, message=FALSE}
+library(medmodr)
 ```
 
-What is special about using `README.Rmd` instead of just `README.md`? You can include R chunks like so:
+## Load Dataset
 
-```{r cars}
-summary(cars)
+Below we simulate a small dataset and run one moderation and one mediation analysis.
+
+```{r simulate-dataset}
+data("demo_medmodr")
+demo <- demo_medmodr
+head(demo)
 ```
 
-You'll still need to render `README.Rmd` regularly, to keep `README.md` up-to-date. `devtools::build_readme()` is handy for this.
+**What each variable represents (for this README)**
 
-You can also embed plots, for example:
+- Treatments / Predictors: x1, x2 (numeric); grp (binary factor)
+- Mediators: m1, m2 (numeric)
+- Moderators: m1, m2, grp, edu (some numeric, some categorical)
+- Outcomes: y1, y2 (numeric)
+- Controls: c1, c2, edu (as covariates; can mix numeric and categorical)
 
-```{r pressure, echo = FALSE}
-plot(pressure)
+This mirrors a realistic workflow where you scan multiple candidates at once.
+
+### Moderation example
+
+`run_moderation_paths()` loops over all `(predictor, moderator, outcome)` combinations and fits `lm()` with the interaction term. It returns one row per interaction term (or a summary row for categorical interactions if requested).
+
+Below we intentionally pass `multiple variables` to each argument. Set plot_sig = FALSE here to keep knitting fast; you can enable plots in your own analysis by setting plot_sig = TRUE
+
+```{r run-moderation}
+mod_summary <- run_moderation_paths(
+  data = demo,
+  predictors = c("x1", "x2"),
+  moderators = c("m1", "grp", "edu"), # mix of numeric and categorical
+  outcomes = c("y1", "y2"),
+  controls = c("c1", "c2"),
+  categorical_vars = c("grp", "edu"),
+  sig_level = 0.05,
+  plot_sig = TRUE, # set TRUE in your analysis to auto-plot significant interactions using the interaction package
+  summarize_categorical = TRUE # summarize multiple dummy-by-interaction lines into a single row per categorical mod
+)
 ```
 
-In that case, don't forget to commit and push the resulting figure files, so they display on GitHub and CRAN.
+The resulting dataset from our moderation analysis is shown below:
+
+```{r view-moderation-dataset}
+head(mod_summary)
+```
+
+**What to look at:**
+
+- `Term` is the specific interaction term (or a summary label for categorical moderators)
+
+- `Interaction_Effect`, `Std_Error`, `T_value`, `P_value`, `CI_Lower`, `CI_Upper`
+
+- `Has_Moderation` indicates significance at `sig_level`
+
+### Mediation example
+`run_mediation_paths()` loops over all `(treatment, mediator, outcome)` triples. For each triple it fits the two linear models and calls `mediation::mediate()` to estimate `ACME, ADE, Total Effect, and Proportion Mediated with 95% CIs`.
+
+We pass **multiple treatments, mediators, and outcomes**. For speed in documentation, we use `sims = 200` and `boot = FALSE`. In real analysis, increase sims (e.g., 1000–5000) and consider boot = TRUE.
+
+```{r run-mediation-analysis}
+med_summary <- run_mediation_paths(
+  data = demo,
+  treatments = c("x1", "x2"), # you can also include "grp" if you want to treat it as a treatment
+  mediators = c("m1", "m2"),
+  outcomes = c("y1", "y2"),
+  controls = c("c1", "c2", "edu"),
+  sims = 200, boot = FALSE, seed = 1
+)
+head(med_summary)
+```
+
+
+#### Visual summaries for mediation
+These plots are fast for small tables but can be heavy on large scans, so we kept most of them eval=FALSE in README. Use them interactively in your analysis.
+
+**Effect overview plot (ACME, ADE, Total Effect with CIs):**
+
+By default, it would generate a summary grid plot for significant mediations only
+
+```{r plot-med-summary-plot}
+plot_mediation_summary_effects(med_summary, filter_significant = TRUE, summary_plot = TRUE)
+```
+
+
+**You can also show only ACME plots from significant results**
+```{r, eval=FALSE}
+plot_mediation_summary_effects(med_summary, filter_significant = TRUE, show_only_acme = TRUE, summary_plot = TRUE)
+```
+
+**You can equally loop over all significant mediation triples and plot each**
+
+```{r, eval=FALSE}
+plot_mediation_summary_effects(med_summary, filter_significant = TRUE, summary_plot = FALSE)
+```
+
+**You can also show only ACME for single plots**
+
+```{r, eval=FALSE}
+plot_mediation_summary_effects(med_summary, filter_significant = TRUE, summary_plot = FALSE, show_only_acme = TRUE)
+```
+
+## Learn more
+Browse the vignettes for detailed workflow
+
+- Topics covered in vignettes:
+
+  - How to prepare your dataset
+
+  - Detailed moderation and mediation workflows
+
+  - Plotting significant results
+
+  - Performance and reproducibility tips
+
+## Function reference (quick)
+
+- `run_moderation_paths(data, predictors, moderators, outcomes, controls, categorical_vars = NULL, sig_level = 0.05, plot_sig = FALSE, summarize_categorical = FALSE)` — loop over predictors × moderators × outcomes
+
+- `run_mediation_paths(data, treatments, mediators, outcomes, controls, sims = 1000, boot = TRUE, seed = 123)` — loop over treatments × mediators × outcomes
+
+- `plot_mediation_summary_effects(summary_table, filter_significant = FALSE, show_only_acme = FALSE)` — visualize significant mediation results
+
+## License and issues
+
+- MIT license
+
+- Please file issues and feature requests on GitHub
+
+- Contributions welcome (add tests where possible)

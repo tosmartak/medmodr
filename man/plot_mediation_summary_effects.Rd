@@ -6,8 +6,9 @@
 \usage{
 plot_mediation_summary_effects(
   summary_table,
-  filter_significant = FALSE,
-  show_only_acme = FALSE
+  filter_significant = TRUE,
+  show_only_acme = FALSE,
+  summary_plot = TRUE
 )
 }
 \arguments{
@@ -16,11 +17,19 @@ plot_mediation_summary_effects(
 \item{filter_significant}{Logical; if \code{TRUE}, keep only rows with \code{Has_Mediation == TRUE}.}
 
 \item{show_only_acme}{Logical; if \code{TRUE}, show only ACME.}
+
+\item{summary_plot}{Logical; if \code{TRUE} (default) return a single faceted plot.
+If \code{FALSE}, return a named list of ggplot objects (one per row).}
 }
 \value{
-A ggplot object.
+A ggplot object if \code{summary_plot = TRUE}; otherwise a named list of ggplot objects.
 }
 \description{
-Creates a faceted pointrange plot across outcomes (rows) and groups
-(Treatment -> Mediator). Requires \pkg{ggplot2} and \pkg{tidyr}.
+Creates either:
+- a faceted pointrange plot across outcomes (rows) and groups (Treatment -> Mediator)
+  when `summary_plot = TRUE` (default), or
+- a list of single-row ggplots (one per Outcome × Group) when `summary_plot = FALSE`.
+}
+\details{
+Requires \pkg{ggplot2} and \pkg{tidyr}.
 }

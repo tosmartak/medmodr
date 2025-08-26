@@ -12,9 +12,10 @@ Imports:
     dplyr (>= 1.0.0),
     tidyr (>= 1.0.0),
     ggplot2 (>= 3.3.0),
-    mediation
-Suggests:
+    mediation,
     interactions,
+    rlang
+Suggests:
     testthat (>= 3.0.0),
     rmarkdown,
     knitr,
@@ -24,3 +25,4 @@ VignetteBuilder: knitr
 URL: https://tosmartak.github.io/medmodr, https://github.com/tosmartak/medmodr
 BugReports: https://github.com/tosmartak/medmodr/issues
 RoxygenNote: 7.3.2
+LazyData: true

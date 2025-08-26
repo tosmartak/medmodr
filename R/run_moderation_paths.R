@@ -54,153 +54,148 @@
 #' }
 #'
 #' @export
-run_moderation_paths <- function(
-    data,
-    predictors,
-    moderators,
-    outcomes,
-    controls = NULL,
-    categorical_vars = NULL,
-    sig_level = 0.05,
-    plot_sig = FALSE,
-    summarize_categorical = FALSE) {
-  stopifnot(is.data.frame(data))
-  # Ensure character vectors (NULL ok for controls / categorical_vars)
-  predictors <- as.character(predictors)
-  moderators <- as.character(moderators)
-  outcomes <- as.character(outcomes)
-  if (!is.null(controls)) controls <- as.character(controls)
-  if (!is.null(categorical_vars)) categorical_vars <- as.character(categorical_vars)
-
-  # Coerce explicitly-specified categoricals to factor (only if they exist)
+run_moderation_paths <- function(data, predictors, moderators, outcomes, controls,
+                                 categorical_vars = NULL,
+                                 sig_level = 0.05,
+                                 plot_sig = FALSE,
+                                 summarize_categorical = FALSE) {
+  # Convert only user-specified categorical variables to factors
   if (!is.null(categorical_vars)) {
     categorical_vars <- intersect(categorical_vars, colnames(data))
-    for (v in categorical_vars) data[[v]] <- as.factor(data[[v]])
-  }
-
-  # Helper: build formula y ~ x * m + controls
-  build_formula <- function(outcome, predictor, modx, ctrl) {
-    # drop duplicates and self-terms from controls
-    if (!is.null(ctrl)) {
-      ctrl <- setdiff(unique(ctrl), c(predictor, modx))
-      ctrl <- ctrl[ctrl %in% names(data)]
+    for (v in categorical_vars) {
+      data[[v]] <- as.factor(data[[v]])
     }
-    # backtick every variable to tolerate spaces/symbols
-    bt <- function(v) paste0("`", v, "`")
-    rhs_terms <- c(paste0(bt(predictor), "*", bt(modx)))
-    if (length(ctrl)) rhs_terms <- c(rhs_terms, bt(ctrl))
-    stats::as.formula(paste(bt(outcome), "~", paste(rhs_terms, collapse = " + ")))
   }
 
-  # Helper: robustly find interaction rows in coef table (ignore backticks)
-  find_interaction_rows <- function(rownms, predictor, modx) {
-    rn <- gsub("`", "", rownms)
-    pat <- paste0(
-      "(^|:)", predictor, "(:|\\*)", modx, "($|:)", "|",
-      "(^|:)", modx, "(:|\\*)", predictor, "($|:)"
-    )
-    which(grepl(pat, rn))
-  }
+  summary_list <- list()
 
-  out_rows <- list()
+  for (predictor in predictors) {
+    for (modx in moderators) {
+      if (predictor == modx) next # avoid self-interaction
 
-  for (x in predictors) {
-    for (m in moderators) {
-      if (identical(x, m)) next
-      for (y in outcomes) {
-        # Skip if required columns are absent
-        needed <- unique(stats::na.omit(c(y, x, m, controls)))
-        missing <- setdiff(needed, names(data))
-        if (length(missing)) {
-          message("[WARN] Skipping (missing vars): ", paste(missing, collapse = ", "))
-          next
-        }
+      for (outcome in outcomes) {
+        ctrl_vars <- setdiff(controls, c(predictor, modx))
 
-        fml <- build_formula(y, x, m, controls)
+        formula_str <- paste(outcome, "~", paste(c(
+          paste0("`", predictor, "`*`", modx, "`"), paste0("`", ctrl_vars, "`")
+        ), collapse = " + "))
 
+        model_formula <- stats::as.formula(formula_str)
         model <- tryCatch(
-          stats::lm(fml, data = data, na.action = stats::na.exclude),
+          stats::lm(model_formula, data = data),
           error = function(e) {
-            message("[WARN] Model failed for: ", x, "  x  ", m, "  ->  ", y, " : ", e$message)
+            message("Model failed for: ", predictor, " x ", modx, " -> ", outcome)
             return(NULL)
           }
         )
         if (is.null(model)) next
 
-        cs <- summary(model)$coefficients
-        if (is.null(cs) || !nrow(cs)) next
+        coef_summary <- summary(model)$coefficients
 
-        idx <- find_interaction_rows(rownames(cs), x, m)
+        interaction_terms <- grep(
+          paste0("(^|:)", predictor, ".*:", modx, "|", modx, ".*:", predictor),
+          rownames(coef_summary),
+          value = TRUE
+        )
+
         has_any_sig <- FALSE
 
-        if (length(idx) > 0) {
-          rows <- cs[idx, , drop = FALSE]
+        if (length(interaction_terms) > 0) {
+          if (summarize_categorical && length(interaction_terms) > 1) {
+            effects <- coef_summary[interaction_terms, "Estimate"]
+            ses <- coef_summary[interaction_terms, "Std. Error"]
+            tvals <- coef_summary[interaction_terms, "t value"]
+            pvals <- coef_summary[interaction_terms, "Pr(>|t|)"]
 
-          if (summarize_categorical && nrow(rows) > 1) {
-            pvals <- rows[, "Pr(>|t|)"]
-            keep <- which.min(pvals)
-            rows <- rows[keep, , drop = FALSE]
-          }
+            min_idx <- which.min(pvals)
 
-          for (i in seq_len(nrow(rows))) {
-            term <- rownames(rows)[i]
-            effect <- rows[i, "Estimate"]
-            std_error <- rows[i, "Std. Error"]
-            t_value <- rows[i, "t value"]
-            p_val <- rows[i, "Pr(>|t|)"]
-            sig_flag <- is.finite(p_val) && p_val < sig_level
-            has_any_sig <- has_any_sig || sig_flag
+            effect <- effects[min_idx]
+            std_error <- ses[min_idx]
+            t_value <- tvals[min_idx]
+            p_val <- pvals[min_idx]
 
-            out_rows[[length(out_rows) + 1L]] <- tibble::tibble(
-              Predictor = x,
-              Moderator = m,
-              Outcome = y,
-              Term = term,
+            has_any_sig <- !is.na(p_val) && p_val < sig_level
+
+            summary_list[[paste(outcome, predictor, modx, sep = "_")]] <- data.frame(
+              Predictor = predictor,
+              Moderator = modx,
+              Outcome = outcome,
+              Term = "Summary",
               Interaction_Effect = effect,
               Std_Error = std_error,
               T_value = t_value,
               P_value = p_val,
               CI_Lower = effect - 1.96 * std_error,
               CI_Upper = effect + 1.96 * std_error,
-              Has_Moderation = sig_flag
+              Has_Moderation = has_any_sig
             )
+          } else {
+            for (term in interaction_terms) {
+              effect <- coef_summary[term, "Estimate"]
+              std_error <- coef_summary[term, "Std. Error"]
+              t_value <- coef_summary[term, "t value"]
+              p_val <- coef_summary[term, "Pr(>|t|)"]
+
+              has_sig <- !is.na(p_val) && p_val < sig_level
+              has_any_sig <- has_any_sig || has_sig
+
+              summary_list[[paste(outcome, predictor, modx, term, sep = "_")]] <- data.frame(
+                Predictor = predictor,
+                Moderator = modx,
+                Outcome = outcome,
+                Term = term,
+                Interaction_Effect = effect,
+                Std_Error = std_error,
+                T_value = t_value,
+                P_value = p_val,
+                CI_Lower = effect - 1.96 * std_error,
+                CI_Upper = effect + 1.96 * std_error,
+                Has_Moderation = has_sig
+              )
+            }
           }
         }
 
-        # Optional plotting for significant interactions
+        # ---- Plotting block ----
         if (plot_sig && has_any_sig) {
-          if (!requireNamespace("interactions", quietly = TRUE)) {
-            message("[INFO] Skipping plot: package 'interactions' not installed.")
-          } else {
-            message("[PLOT] Plotting: ", x, "  x  ", m, "  ->  ", y)
-            tryCatch(
-              {
-                if (is.factor(data[[x]])) {
-                  p <- interactions::cat_plot(
-                    model = model, pred = x, modx = m, data = data,
-                    plot.points = FALSE, main.title = paste0(x, "  x  ", m, "  ->  ", y)
-                  )
-                } else {
-                  p <- interactions::interact_plot(
-                    model = model, pred = x, modx = m, data = data,
-                    plot.points = FALSE, main.title = paste0(x, "  x  ", m, "  ->  ", y)
-                  )
-                }
-                print(p)
-              },
-              error = function(e) {
-                message("  [ERROR] Plot failed: ", e$message)
+          message("Plotting: ", predictor, " x ", modx, " -> ", outcome)
+          tryCatch(
+            {
+              if (is.factor(data[[predictor]])) {
+                # Use cat_plot for factor predictors
+                p <- do.call(interactions::cat_plot, list(
+                  model = model,
+                  pred = predictor,
+                  modx = modx,
+                  data = data,
+                  plot.points = FALSE,
+                  main.title = paste0(predictor, " x ", modx, " -> ", outcome)
+                ))
+              } else {
+                # Use interact_plot for numeric predictors
+                p <- do.call(interactions::interact_plot, list(
+                  model = model,
+                  pred = predictor,
+                  modx = modx,
+                  data = data,
+                  plot.points = FALSE,
+                  main.title = paste0(predictor, " x ", modx, " -> ", outcome)
+                ))
               }
-            )
-          }
+              print(p)
+            },
+            error = function(e) {
+              message("  Plot failed: ", e$message)
+            }
+          )
         }
       }
     }
   }
 
-  if (length(out_rows)) {
-    dplyr::bind_rows(out_rows)
+  if (length(summary_list) > 0) {
+    return(dplyr::bind_rows(summary_list))
   } else {
-    tibble::tibble()
+    return(tibble::tibble())
   }
 }
