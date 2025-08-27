@@ -1,8 +1,9 @@
 ---
-title: "getting-started"
+title: "Getting Started with medmodr"
+author: "Tosin Harold Akingbemisilu"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{getting-started}
+  %\VignetteIndexEntry{Getting Started with medmodr}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -14,6 +15,314 @@ knitr::opts_chunk$set(
 )
 ```
 
+---
+
 ```{r setup}
 library(medmodr)
+```
+
+```{r load-global, include=FALSE}
+library(medmodr)
+library(dplyr)
+library(kableExtra)
+
+# Define a global hook so all kable tables automatically get styled
+knitr::knit_hooks$set(kable = function(kable_input) {
+  kableExtra::kable_styling(
+    kable_input,
+    full_width = FALSE,
+    bootstrap_options = c("striped", "hover", "condensed", "responsive")
+  ) %>%
+    kableExtra::scroll_box(width = "100%", height = "400px")
+})
+```
+
+# Introduction
+
+We implement a `medmodr` package which helps you systematically sweep through combinations of variables to detect:
+
+- **Moderation**: is the effect of an independent variable (X) on a dependent variable (Y) conditional on or moderated by a third variable (M)?
+- **Mediation**: does an independent variable (X) influence a dependent variable (Y) indirectly through a third variable called a mediator (M)?
+
+Instead of fitting models one by one, `medmodr` iterates across your variable sets and returns tidy summary tables you can filter, rank, and plot. It also automatically generates clean plots suitable for publications. This package builds upon the [`mediation`](https://CRAN.R-project.org/package=mediation) package [Tingley et al., 2014] for mediation analysis and the [`interactions`](https://CRAN.R-project.org/package=interactions) package [Long, 2024] for moderation plots.
+
+## Load Example Data
+
+The package comes with a simulated dataset `demo_medmodr` that mirrors a realistic use case which we have used in this notebook.  
+It includes numeric predictors, categorical moderators, and multiple outcomes.
+
+```{r demo-dataset}
+data("demo_medmodr")
+knitr::kable(head(demo_medmodr))
+```
+
+**Variables included**
+
+- Predictors (Treatments): `x1`, `x2` (numeric)
+
+- Moderators: `m1`, `m2` (numeric), `grp`, `edu` (categorical)
+
+- Mediators: `m1`, `m2` (numeric) — can also appear as moderators
+
+- Outcomes: `y1`, `y2` (numeric)
+
+- Controls: `c1`, `c2`, `edu`
+
+---
+
+# Moderation Analysis
+
+In this section, we demonstrate how to run a moderation analysis using the `run_moderation_paths()` function.  
+Moderation analysis tests whether the relationship between a predictor and an outcome depends on the value of another variable (the moderator).
+
+## Running a Moderation Analysis
+
+The core function for moderation is `run_moderation_paths()`.
+It automatically loops through all predictor × moderator × outcome combinations, fits a linear model with interaction terms, and extracts key statistics.
+
+Here we test whether predictors `x1` and `x2` are moderated by `m1`, `grp`, and `edu`, while controlling for `c1` and `c2`.
+We also specify which variables should be treated as categorical.
+
+```{r run-moderation-paths}
+mod_summary <- run_moderation_paths(
+  data = demo_medmodr,
+  predictors = c("x1", "x2"),
+  moderators = c("m1", "grp", "edu"),
+  outcomes = c("y1", "y2"),
+  controls = c("c1", "c2"),
+  categorical_vars = c("grp", "edu"),
+  sig_level = 0.05,
+  plot_sig = FALSE, # set TRUE to auto-plot significant interactions
+  summarize_categorical = TRUE
+)
+```
+
+
+### Interpreting the moderation results
+
+The expected moderation result dataset is shown below:
+
+```{r view-moderation-result-dataset}
+knitr::kable(head(mod_summary))
+```
+
+The returned object is a tidy `data.frame` (or tibble) with one row per tested interaction.
+
+**Key columns include:**
+
+- Predictor / Moderator / Outcome: the variables involved in the test.
+
+- Term: the specific interaction term (e.g., `x1:m1`) or a single summary if categorical moderators were collapsed.
+
+- Interaction_Effect: estimated coefficient of the interaction term.
+
+- Std_Error, T_value, P_value: test statistics from the fitted model (Standard error, T-value and P-value).
+
+- CI_Lower, CI_Upper: 95% confidence interval.
+
+- Has_Moderation: whether the interaction is significant at the specified level.
+
+
+### Visualizing Moderation Effects (Interactions)
+
+If you set `plot_sig = TRUE`, the function uses the interactions package to plot only significant effects automatically:
+
+- If the predictor is numeric, `interact_plot()` shows regression lines at different levels of the moderator.
+
+- If the predictor is categorical, `cat_plot()` shows group means at moderator levels.
+
+Example (similar to what we did earlier, except that this time, we will set plot_sig to TRUE to generate plots for significant effects):
+
+```{r run-visualize-moderation-paths, fig.width=8, fig.height=6}
+# You can still assign this to an object as we have done below, so you can get the summary dataset as well
+mod_summary_for_viz <- run_moderation_paths(
+  data = demo_medmodr,
+  predictors = c("x1", "x2"),
+  moderators = c("m1", "edu"),
+  outcomes = c("y1", "y2"),
+  controls = c("c1", "c2"),
+  categorical_vars = c("edu"),
+  sig_level = 0.05,
+  plot_sig = TRUE
+)
+```
+
+**When to Use This**
+
+Use moderation when you want to answer questions like:
+
+- “Does the effect of x1 on y1 depend on educational attainment (edu)?”
+
+- “Does group membership (grp) change how x2 influences y2?”
+
+This approach lets you scan multiple candidate moderators efficiently and summarize results in a single tidy dataset.
+
+---
+
+# Mediation Analysis
+
+Mediation analysis helps answer *why* or *how* a treatment (or predictor) affects an outcome.  
+It tests whether the effect is transmitted through a third variable (the mediator).
+
+For example: *Does `x1` influence `y1` through `m1`?*
+
+## Running a Mediation Analysis
+
+The function `run_mediation_paths()` automates multiple mediation scans.  
+It loops through all `(treatment, mediator, outcome)` triples, fits the required models, and calls `mediation::mediate()` to estimate indirect, direct, and total effects.
+
+In this example we test two treatments (`x1`, `x2`), two mediators (`m1`, `m2`), and two outcomes (`y1`, `y2`), while adjusting for covariates (`c1`, `c2`, `edu`).
+
+For speed, we reduce the number of simulation draws to 200 and use `boot = FALSE`.  
+In real analysis, you should set `sims = 1000–5000` and consider `boot = TRUE` for more robust estimates.
+
+```{r run-mediation}
+med_summary <- run_mediation_paths(
+  data = demo_medmodr,
+  treatments = c("x1", "x2"),
+  mediators = c("m1", "m2"),
+  outcomes = c("y1", "y2"),
+  controls = c("c1", "c2", "edu"),
+  sims = 200,
+  boot = FALSE,
+  seed = 1
+)
+```
+
+### Understanding and Interpreting the mediation results
+
+The expected mediation result dataset is shown below:
+
+```{r view-mediation-result-dataset}
+knitr::kable(head(med_summary))
+```
+
+The returned object is a tidy tibble, one row per `(treatment, mediator, outcome)` triple.
+
+**Key variables from the result include:**
+
+- **Treatment / Mediator / Outcome**: the variables being tested in the mediation pathway.
+
+- **ACME (Average Causal Mediation Effect)**: indirect effect via the mediator.
+
+  - `ACME_CI_Lower` / `ACME_CI_Upper`: 95% CI.
+
+  - `ACME_p`: p-value for the indirect effect.
+
+- **ADE (Average Direct Effect)**: effect of the treatment not explained by the mediator.
+
+  - `ADE_CI_Lower` / `ADE_CI_Upper`: 95% CI.
+
+  - `ADE_p`: p-value for direct effect.
+
+- **Total_Effect**: overall effect of treatment on outcome (ACME + ADE).
+
+  - `Total_Effect_CI_Lower` / `Total_Effect_CI_Upper`: 95% CI.
+
+  - `Total_Effect_p`: p-value for total effect.
+
+- **Prop_Mediated**: proportion of the total effect explained by the mediator.
+
+  - `PropMediated_CI_Lower` / `PropMediated_CI_Upper`: 95% CI.
+
+  - `PropMediated_p`: significance test for proportion mediated.
+
+- **Has_Mediation**: logical flag indicating whether the ACME is significant, with CIs consistently on one side of zero.
+
+Together, these allow you to see whether the mediator truly explains part of the treatment–outcome relationship.
+
+### Visualizing Mediation Effects
+
+To summarize results visually, use `plot_mediation_summary_effects()` and include the result you have generated from your mediation analysis from the use of `run_mediation_paths()` as shown earlier.
+By default, it filters to significant results and shows ACME, ADE, and Total Effect with confidence intervals.
+
+#### Overview Plot
+
+```{r plot-mediation-result-summary-all, fig.width=8, fig.height=6}
+plot_mediation_summary_effects(med_summary, 
+                               filter_significant = TRUE, 
+                               summary_plot = TRUE)
+```
+
+This produces a faceted plot with:
+
+- Columns = Treatment → Mediator pairs
+
+- Rows = Outcomes
+
+- Point estimates + 95% CIs for ACME, ADE, and Total Effect
+
+
+#### Overview ACME-only Plot
+
+Focus only on indirect (mediated) effects:
+
+```{r plot-mediation-result-summary-acme-only, fig.width=8, fig.height=6}
+plot_mediation_summary_effects(med_summary, 
+                               filter_significant = TRUE, 
+                               show_only_acme = TRUE, 
+                               summary_plot = TRUE
+)
+```
+
+#### One Plot per Pathway
+
+Instead of a faceted grid, generate one plot per triple:
+
+```{r plot-mediation-result-per-pathway, fig.width=8, fig.height=6}
+plot_mediation_summary_effects(med_summary,
+  filter_significant = TRUE,
+  summary_plot = FALSE
+)
+```
+
+You can also restrict these to ACME only:
+
+```{r plot-mediation-result-per-pathway-acme, fig.width=8, fig.height=6}
+plot_mediation_summary_effects(med_summary,
+  filter_significant = TRUE,
+  summary_plot = FALSE,
+  show_only_acme = TRUE
+)
+```
+
+**When to Use This**
+
+Use mediation when you want to answer questions such as:
+
+- Does education (`edu`) explain part of the effect of treatment `x1` on outcome `y1`?
+
+- Is the effect of `x2` on `y2` transmitted through mediator `m2`?
+
+By combining `run_mediation_paths()` with `plot_mediation_summary_effects()`, you can efficiently scan multiple possible pathways and visualize the significant mediations.
+
+---
+
+# References
+
+- Tingley, D., Yamamoto, T., Hirose, K., Keele, L., & Imai, K. (2014).  
+  **mediation: R Package for Causal Mediation Analysis.**  
+  *Journal of Statistical Software*, 59(5), 1–38. https://doi.org/10.18637/jss.v059.i05  
+
+- Long, J. A. (2024).  
+  **interactions: Comprehensive, User-Friendly Toolkit for Probing Interactions.**  
+  R package version 1.1.6. https://cran.r-project.org/package=interactions  
+
+- Wickham, H., François, R., Henry, L., & Müller, K. (2023).  
+  **dplyr: A Grammar of Data Manipulation.**  
+  R package version 1.1.4. https://CRAN.R-project.org/package=dplyr  
+
+- Wickham, H. (2023).  
+  **ggplot2: Elegant Graphics for Data Analysis.**  
+  Springer-Verlag New York.  
+  https://ggplot2.tidyverse.org
+
+---
+
+# Citing medmodr
+
+If you use **medmodr** in your research, please cite it as:
+
+```{r citation, echo=FALSE}
+citation("medmodr")
 ```

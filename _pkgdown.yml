@@ -1,4 +1,13 @@
-url: ~
+url: https://tosmartak.github.io/medmodr
 template:
   bootstrap: 5
 
+reference:
+- title: Moderation
+  contents:
+  - run_moderation_paths
+
+- title: Mediation
+  contents:
+  - run_mediation_paths
+  - plot_mediation_summary_effects

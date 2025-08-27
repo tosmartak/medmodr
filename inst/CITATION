@@ -1,0 +1,11 @@
+
+citHeader("To cite medmodr in publications, please use:")
+
+citEntry(
+  entry     = "Manual",
+  title     = "medmodr: Moderation and Mediation Path Analysis in R",
+  author    = person("Tosin Harold", "Akingbemisilu"),
+  year      = "2025",
+  note      = "R package version 0.1.0",
+  url       = "https://tosmartak.github.io/medmodr"
+)
