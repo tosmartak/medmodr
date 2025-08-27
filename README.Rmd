@@ -15,18 +15,18 @@ knitr::opts_chunk$set(
 )
 ```
 
-# medmodr Package: Iterated Moderation and Mediation at Scale
+# medmodr Package: Iterated Moderation and Mediation Analysis at Scale
 
 <!-- badges: start -->
 [![R-CMD-check](https://github.com/tosmartak/medmodr/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/tosmartak/medmodr/actions/workflows/R-CMD-check.yaml)
 <!-- badges: end -->
 
-`medmodr` helps you systematically sweep through combinations of variables to detect:
+We implement a `medmodr` package which helps you systematically sweep through combinations of variables to detect:
 
-- **Moderation**: does a moderator change the effect of a predictor on an outcome?
-- **Mediation**: does a mediator transmit the effect of a treatment to an outcome?
+- **Moderation**: is the effect of an independent variable (X) on a dependent variable (Y) conditional on or moderated by a third variable (M)?
+- **Mediation**: does an independent variable (X) influence a dependent variable (Y) indirectly through a third variable called a mediator (M)?
 
-Instead of fitting models one by one, medmodr iterates across your variable sets and returns tidy summary tables you can filter, rank, and plot.
+Instead of fitting models one by one, `medmodr` iterates across your variable sets and returns tidy summary tables you can filter, rank, and plot. It also automatically generates clean plots suitable for publications. This package builds upon the [`mediation`](https://CRAN.R-project.org/package=mediation) package [Tingley et al., 2014] for mediation analysis and the [`interactions`](https://CRAN.R-project.org/package=interactions) package [Long, 2024] for moderation plots.
 
 ## Installation
 
@@ -56,12 +56,11 @@ library(medmodr)
 
 ## Load Dataset
 
-Below we simulate a small dataset and run one moderation and one mediation analysis.
+Below we load our small simulated dataset and run one moderation and one mediation analysis.
 
 ```{r simulate-dataset}
 data("demo_medmodr")
-demo <- demo_medmodr
-head(demo)
+knitr::kable(head(demo_medmodr))
 ```
 
 **What each variable represents (for this README)**
@@ -82,14 +81,14 @@ Below we intentionally pass `multiple variables` to each argument. Set plot_sig 
 
 ```{r run-moderation}
 mod_summary <- run_moderation_paths(
-  data = demo,
+  data = demo_medmodr,
   predictors = c("x1", "x2"),
   moderators = c("m1", "grp", "edu"), # mix of numeric and categorical
   outcomes = c("y1", "y2"),
   controls = c("c1", "c2"),
   categorical_vars = c("grp", "edu"),
   sig_level = 0.05,
-  plot_sig = TRUE, # set TRUE in your analysis to auto-plot significant interactions using the interaction package
+  plot_sig = FALSE, # set TRUE in your analysis to auto-plot significant interactions using the interaction package
   summarize_categorical = TRUE # summarize multiple dummy-by-interaction lines into a single row per categorical mod
 )
 ```
@@ -97,7 +96,7 @@ mod_summary <- run_moderation_paths(
 The resulting dataset from our moderation analysis is shown below:
 
 ```{r view-moderation-dataset}
-head(mod_summary)
+knitr::kable(head(mod_summary))
 ```
 
 **What to look at:**
@@ -115,16 +114,20 @@ We pass **multiple treatments, mediators, and outcomes**. For speed in documenta
 
 ```{r run-mediation-analysis}
 med_summary <- run_mediation_paths(
-  data = demo,
+  data = demo_medmodr,
   treatments = c("x1", "x2"), # you can also include "grp" if you want to treat it as a treatment
   mediators = c("m1", "m2"),
   outcomes = c("y1", "y2"),
   controls = c("c1", "c2", "edu"),
   sims = 200, boot = FALSE, seed = 1
 )
-head(med_summary)
 ```
 
+The resulting dataset from our mediation analysis is shown below:
+
+```{r view-mediation-dataset}
+knitr::kable(head(med_summary))
+```
 
 #### Visual summaries for mediation
 These plots are fast for small tables but can be heavy on large scans, so we kept most of them eval=FALSE in README. Use them interactively in your analysis.
@@ -133,7 +136,7 @@ These plots are fast for small tables but can be heavy on large scans, so we kep
 
 By default, it would generate a summary grid plot for significant mediations only
 
-```{r plot-med-summary-plot}
+```{r plot-med-summary-plot, eval=FALSE}
 plot_mediation_summary_effects(med_summary, filter_significant = TRUE, summary_plot = TRUE)
 ```
 
@@ -178,8 +181,11 @@ Browse the vignettes for detailed workflow
 
 ## License and issues
 
-- MIT license
+- [![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
 - Please file issues and feature requests on GitHub
 
 - Contributions welcome (add tests where possible)
+
+## References
+
