@@ -20,8 +20,7 @@ Suggests:
     rmarkdown,
     knitr,
     pkgdown,
-    kableExtra,
-    dplyr
+    kableExtra
 Config/testthat/edition: 3
 VignetteBuilder: knitr
 URL: https://tosmartak.github.io/medmodr, https://github.com/tosmartak/medmodr

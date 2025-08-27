@@ -3,6 +3,10 @@ template:
   bootstrap: 5
 
 reference:
+- title: Datasets
+  contents:
+  - demo_medmodr
+  
 - title: Moderation
   contents:
   - run_moderation_paths
