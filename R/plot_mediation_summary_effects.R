@@ -12,6 +12,7 @@
 #' @param show_only_acme Logical; if \code{TRUE}, show only ACME.
 #' @param summary_plot Logical; if \code{TRUE} (default) return a single faceted plot.
 #'   If \code{FALSE}, return a named list of ggplot objects (one per row).
+#'   a list of plots per (Outcome × Treatment × Mediator).
 #'
 #' @return A ggplot object if \code{summary_plot = TRUE}; otherwise a named list of ggplot objects.
 #' @export
@@ -19,6 +20,41 @@ plot_mediation_summary_effects <- function(summary_table,
                                            filter_significant = TRUE,
                                            show_only_acme = FALSE,
                                            summary_plot = TRUE) {
+  # ------------------------------
+  # Validation block
+  # ------------------------------
+  if (!is.data.frame(summary_table)) {
+    stop("`summary_table` must be a data frame (output of run_mediation_paths).", call. = FALSE)
+  }
+
+  required_cols <- c(
+    "Treatment", "Mediator", "Outcome",
+    "ACME", "ADE", "Total_Effect",
+    "ACME_CI_Lower", "ACME_CI_Upper",
+    "ADE_CI_Lower", "ADE_CI_Upper",
+    "Total_Effect_CI_Lower", "Total_Effect_CI_Upper",
+    "ACME_p", "ADE_p", "Total_Effect_p",
+    "Has_Mediation"
+  )
+
+  missing <- setdiff(required_cols, names(summary_table))
+  if (length(missing)) {
+    stop("Missing required columns in `summary_table`: ", paste(missing, collapse = ", "), call. = FALSE)
+  }
+
+  if (!is.logical(filter_significant) || length(filter_significant) != 1) {
+    stop("`filter_significant` must be a single logical value.", call. = FALSE)
+  }
+  if (!is.logical(show_only_acme) || length(show_only_acme) != 1) {
+    stop("`show_only_acme` must be a single logical value.", call. = FALSE)
+  }
+  if (!is.logical(summary_plot) || length(summary_plot) != 1) {
+    stop("`summary_plot` must be a single logical value.", call. = FALSE)
+  }
+
+  # ------------------------------
+  # Core logic
+  # ------------------------------
   data <- summary_table
 
   if (isTRUE(filter_significant)) {

@@ -19,7 +19,8 @@ plot_mediation_summary_effects(
 \item{show_only_acme}{Logical; if \code{TRUE}, show only ACME.}
 
 \item{summary_plot}{Logical; if \code{TRUE} (default) return a single faceted plot.
-If \code{FALSE}, return a named list of ggplot objects (one per row).}
+If \code{FALSE}, return a named list of ggplot objects (one per row).
+a list of plots per (Outcome × Treatment × Mediator).}
 }
 \value{
 A ggplot object if \code{summary_plot = TRUE}; otherwise a named list of ggplot objects.

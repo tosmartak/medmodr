@@ -239,9 +239,10 @@ By default, it filters to significant results and shows ACME, ADE, and Total Eff
 #### Overview Plot
 
 ```{r plot-mediation-result-summary-all, fig.width=8, fig.height=6}
-plot_mediation_summary_effects(med_summary, 
-                               filter_significant = TRUE, 
-                               summary_plot = TRUE)
+plot_mediation_summary_effects(med_summary,
+  filter_significant = TRUE,
+  summary_plot = TRUE
+)
 ```
 
 This produces a faceted plot with:
@@ -258,10 +259,10 @@ This produces a faceted plot with:
 Focus only on indirect (mediated) effects:
 
 ```{r plot-mediation-result-summary-acme-only, fig.width=8, fig.height=6}
-plot_mediation_summary_effects(med_summary, 
-                               filter_significant = TRUE, 
-                               show_only_acme = TRUE, 
-                               summary_plot = TRUE
+plot_mediation_summary_effects(med_summary,
+  filter_significant = TRUE,
+  show_only_acme = TRUE,
+  summary_plot = TRUE
 )
 ```
 

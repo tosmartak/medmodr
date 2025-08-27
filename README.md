@@ -10,24 +10,21 @@
 v3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 <!-- badges: end -->
 
-We implement a `medmodr` package which helps you systematically sweep
-through combinations of variables to detect:
+Systematic moderation and mediation analysis in R.
 
-- **Moderation**: is the effect of an independent variable (X) on a
-  dependent variable (Y) conditional on or moderated by a third variable
-  (M)?
-- **Mediation**: does an independent variable (X) influence a dependent
-  variable (Y) indirectly through a third variable called a mediator
-  (M)?
-
-Instead of fitting models one by one, `medmodr` iterates across your
-variable sets and returns tidy summary tables you can filter, rank, and
-plot. It also automatically generates clean plots suitable for
-publications. This package builds upon the
+`medmodr` helps you scan multiple variable combinations for moderation
+and mediation effects without having to manually fit each model. It
+provides tidy outputs and ready-to-publish visualizations. This package
+builds upon the
 [`mediation`](https://CRAN.R-project.org/package=mediation) package
 \[Tingley et al., 2014\] for mediation analysis and the
 [`interactions`](https://CRAN.R-project.org/package=interactions)
 package \[Long, 2024\] for moderation plots.
+
+## Learn more
+
+Full walkthrough with moderation, mediation, and plotting:
+[`Getting started with medmodr`](https://tosmartak.github.io/medmodr/articles/getting-started.html)
 
 ## Installation
 
@@ -48,54 +45,20 @@ pak::pak("tosmartak/medmodr")
 # devtools::install_github("tosmartak/medmodr")
 ```
 
-## Quick Start
-
-Load the package and access the demo dataset included:
-
 ``` r
 library(medmodr)
 ```
 
-## Load Dataset
+## Example
 
-Below we load our small simulated dataset and run one moderation and one
-mediation analysis.
+The package includes a small demo dataset `demo_medmodr`. Below we show
+one minimal moderation and mediation analysis.
 
 ``` r
 data("demo_medmodr")
-knitr::kable(head(demo_medmodr))
 ```
 
-|         x1 |         x2 |         m1 |         m2 |         c1 |         c2 | grp     | edu       |         y1 |         y2 |
-|-----------:|-----------:|-----------:|-----------:|-----------:|-----------:|:--------|:----------|-----------:|-----------:|
-|  1.3709584 | -2.0009292 |  2.4316793 | -1.4490405 |  0.6888078 |  2.3250585 | treat   | tertiary  |  4.4866832 | -0.5296494 |
-| -0.5646982 |  0.3337772 | -1.3210303 |  0.6225867 |  0.7250830 |  0.5241222 | control | tertiary  |  0.3903687 |  1.0376276 |
-|  0.3631284 |  1.1713251 |  0.3459897 |  1.6904484 |  0.2173802 |  0.9707334 | control | secondary |  0.3218529 |  0.6648226 |
-|  0.6328626 |  2.0595392 |  0.5553570 |  2.0712917 | -0.2016567 |  0.3769734 | treat   | tertiary  |  2.0106726 |  3.1052683 |
-|  0.4042683 | -1.3768616 | -0.2549411 | -1.4866388 | -1.3656899 | -0.9959334 | treat   | primary   |  0.2309061 | -0.5248641 |
-| -0.1061245 | -1.1508556 | -1.0836383 |  0.8735562 | -0.3089376 | -0.5974829 | control | secondary | -0.7814729 |  0.2024834 |
-
-**What each variable represents (for this README)**
-
-- Treatments / Predictors: x1, x2 (numeric); grp (binary factor)
-- Mediators: m1, m2 (numeric)
-- Moderators: m1, m2, grp, edu (some numeric, some categorical)
-- Outcomes: y1, y2 (numeric)
-- Controls: c1, c2, edu (as covariates; can mix numeric and categorical)
-
-This mirrors a realistic workflow where you scan multiple candidates at
-once.
-
 ### Moderation example
-
-`run_moderation_paths()` loops over all
-`(predictor, moderator, outcome)` combinations and fits `lm()` with the
-interaction term. It returns one row per interaction term (or a summary
-row for categorical interactions if requested).
-
-Below we intentionally pass `multiple variables` to each argument. Set
-plot_sig = FALSE here to keep knitting fast; you can enable plots in
-your own analysis by setting plot_sig = TRUE
 
 ``` r
 mod_summary <- run_moderation_paths(
@@ -126,26 +89,7 @@ knitr::kable(head(mod_summary))
 | x1:edusecondary…5 | x1        | edu       | y1      | Summary     |          0.2194922 | 0.2411250 |  0.9102839 | 0.3638141 | -0.2531128 |  0.6920972 | FALSE          |
 | x1:edusecondary…6 | x1        | edu       | y2      | Summary     |         -0.3076175 | 0.2508876 | -1.2261170 | 0.2216563 | -0.7993572 |  0.1841221 | FALSE          |
 
-**What to look at:**
-
-- `Term` is the specific interaction term (or a summary label for
-  categorical moderators)
-
-- `Interaction_Effect`, `Std_Error`, `T_value`, `P_value`, `CI_Lower`,
-  `CI_Upper`
-
-- `Has_Moderation` indicates significance at `sig_level`
-
 ### Mediation example
-
-`run_mediation_paths()` loops over all `(treatment, mediator, outcome)`
-triples. For each triple it fits the two linear models and calls
-`mediation::mediate()` to estimate
-`ACME, ADE, Total Effect, and Proportion Mediated with 95% CIs`.
-
-We pass **multiple treatments, mediators, and outcomes**. For speed in
-documentation, we use `sims = 200` and `boot = FALSE`. In real analysis,
-increase sims (e.g., 1000–5000) and consider boot = TRUE.
 
 ``` r
 med_summary <- run_mediation_paths(
@@ -207,20 +151,6 @@ plot_mediation_summary_effects(med_summary, filter_significant = TRUE, summary_p
 plot_mediation_summary_effects(med_summary, filter_significant = TRUE, summary_plot = FALSE, show_only_acme = TRUE)
 ```
 
-## Learn more
-
-Browse the vignettes for detailed workflow
-
-- Topics covered in vignettes:
-
-  - How to prepare your dataset
-
-  - Detailed moderation and mediation workflows
-
-  - Plotting significant results
-
-  - Performance and reproducibility tips
-
 ## Function reference (quick)
 
 - `run_moderation_paths(data, predictors, moderators, outcomes, controls, categorical_vars = NULL, sig_level = 0.05, plot_sig = FALSE, summarize_categorical = FALSE)`
@@ -240,3 +170,26 @@ Browse the vignettes for detailed workflow
 - Please file issues and feature requests on GitHub
 
 - Contributions welcome (add tests where possible)
+
+## Citation
+
+If you use medmodr in your research, please cite it:
+
+``` r
+citation("medmodr")
+#> To cite medmodr in publications, please use:
+#> 
+#>   Akingbemisilu T (2025). _medmodr: Moderation and Mediation Path
+#>   Analysis in R_. R package version 0.1.0,
+#>   <https://tosmartak.github.io/medmodr>.
+#> 
+#> A BibTeX entry for LaTeX users is
+#> 
+#>   @Manual{,
+#>     title = {medmodr: Moderation and Mediation Path Analysis in R},
+#>     author = {Tosin Harold Akingbemisilu},
+#>     year = {2025},
+#>     note = {R package version 0.1.0},
+#>     url = {https://tosmartak.github.io/medmodr},
+#>   }
+```

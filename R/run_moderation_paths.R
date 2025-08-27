@@ -59,6 +59,51 @@ run_moderation_paths <- function(data, predictors, moderators, outcomes, control
                                  sig_level = 0.05,
                                  plot_sig = FALSE,
                                  summarize_categorical = FALSE) {
+  # ------------------------------
+  # Validation block
+  # ------------------------------
+  stopifnot(is.data.frame(data))
+
+  if (!length(predictors) || !length(moderators) || !length(outcomes)) {
+    stop("Supply at least one predictor, moderator, and outcome.", call. = FALSE)
+  }
+
+  if (!is.null(controls)) controls <- as.character(controls)
+
+  if (!is.logical(plot_sig) || length(plot_sig) != 1) {
+    stop("`plot_sig` must be a single logical (TRUE/FALSE).", call. = FALSE)
+  }
+
+  if (!is.logical(summarize_categorical) || length(summarize_categorical) != 1) {
+    stop("`summarize_categorical` must be a single logical (TRUE/FALSE).", call. = FALSE)
+  }
+
+  all_vars <- unique(c(predictors, moderators, outcomes, controls))
+  missing <- setdiff(all_vars, names(data))
+  if (length(missing)) {
+    stop("Missing columns in `data`: ", paste(missing, collapse = ", "), call. = FALSE)
+  }
+
+  # Check numeric requirement for predictors, moderators, outcomes
+  num_vars <- unique(c(predictors, moderators, outcomes))
+  not_numeric <- num_vars[!sapply(data[num_vars], function(x) is.numeric(x) || is.factor(x))]
+  if (length(not_numeric)) {
+    warning(
+      "Non-numeric and non-factor variable(s) detected: ",
+      paste(not_numeric, collapse = ", "),
+      ". Consider converting appropriately before analysis."
+    )
+  }
+
+  # Factor handling guidance
+  factor_vars <- names(Filter(is.factor, data[all_vars]))
+  if (length(factor_vars)) {
+    message(
+      "Note: Factor variables detected (", paste(factor_vars, collapse = ", "),
+      "). Ensure interpretation of factor levels is appropriate."
+    )
+  }
+
   # Convert only user-specified categorical variables to factors
   if (!is.null(categorical_vars)) {
     categorical_vars <- intersect(categorical_vars, colnames(data))
@@ -67,6 +112,9 @@ run_moderation_paths <- function(data, predictors, moderators, outcomes, control
     }
   }
 
+  # ------------------------------
+  # Core logic
+  # ------------------------------
   summary_list <- list()
 
   for (predictor in predictors) {
@@ -162,7 +210,6 @@ run_moderation_paths <- function(data, predictors, moderators, outcomes, control
           tryCatch(
             {
               if (is.factor(data[[predictor]])) {
-                # Use cat_plot for factor predictors
                 p <- do.call(interactions::cat_plot, list(
                   model = model,
                   pred = predictor,
@@ -172,7 +219,6 @@ run_moderation_paths <- function(data, predictors, moderators, outcomes, control
                   main.title = paste0(predictor, " x ", modx, " -> ", outcome)
                 ))
               } else {
-                # Use interact_plot for numeric predictors
                 p <- do.call(interactions::interact_plot, list(
                   model = model,
                   pred = predictor,
@@ -196,6 +242,7 @@ run_moderation_paths <- function(data, predictors, moderators, outcomes, control
   if (length(summary_list) > 0) {
     return(dplyr::bind_rows(summary_list))
   } else {
+    message("No interaction terms detected across specified predictors, moderators, and outcomes.")
     return(tibble::tibble())
   }
 }

@@ -68,15 +68,51 @@ run_mediation_paths <- function(
     sims = 1000,
     boot = TRUE,
     seed = 123) {
+  # ------------------------------
+  # Validation block
+  # ------------------------------
   if (!requireNamespace("mediation", quietly = TRUE)) {
     stop("Package 'mediation' is required for run_mediation_paths(). Install it first.", call. = FALSE)
   }
   stopifnot(is.data.frame(data))
+
   treatments <- as.character(treatments)
   mediators <- as.character(mediators)
   outcomes <- as.character(outcomes)
   if (!is.null(controls)) controls <- as.character(controls)
 
+  if (!length(treatments) || !length(mediators) || !length(outcomes)) {
+    stop("Supply at least one treatment, mediator, and outcome.", call. = FALSE)
+  }
+
+  all_vars <- unique(c(treatments, mediators, outcomes, controls))
+  missing <- setdiff(all_vars, names(data))
+  if (length(missing)) {
+    stop("Missing columns in `data`: ", paste(missing, collapse = ", "), call. = FALSE)
+  }
+
+  # Check numeric requirement for mediation (treatments, mediators, outcomes should be numeric or factor)
+  num_vars <- unique(c(treatments, mediators, outcomes))
+  not_numeric <- num_vars[!sapply(data[num_vars], function(x) is.numeric(x) || is.factor(x))]
+  if (length(not_numeric)) {
+    warning(
+      "Non-numeric and non-factor variable(s) detected: ",
+      paste(not_numeric, collapse = ", "),
+      ". Consider converting appropriately before mediation analysis."
+    )
+  }
+
+  factor_vars <- names(Filter(is.factor, data[all_vars]))
+  if (length(factor_vars)) {
+    message(
+      "Note: Factor variables detected (", paste(factor_vars, collapse = ", "),
+      "). Ensure interpretation of factor levels is appropriate."
+    )
+  }
+
+  # ------------------------------
+  # Helper for safe formula building
+  # ------------------------------
   # helper: build safe formula strings and convert to formulas
   build_formula <- function(lhs, rhs_terms) {
     bt <- function(v) paste0("`", v, "`")
@@ -85,6 +121,10 @@ run_mediation_paths <- function(
   }
 
   out_list <- list()
+
+  # ------------------------------
+  # Core mediation loops
+  # ------------------------------
 
   for (med in mediators) {
     for (tr in treatments) {
