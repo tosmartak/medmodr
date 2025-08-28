@@ -10,6 +10,8 @@ v3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](https://www.gnu.org
 coverage](https://codecov.io/gh/tosmartak/medmodr/graph/badge.svg)](https://app.codecov.io/gh/tosmartak/medmodr)
 [![GitHub
 version](https://img.shields.io/github/r-package/v/tosmartak/medmodr)](https://github.com/tosmartak/medmodr)
+[![pkgdown
+site](https://img.shields.io/badge/docs-pkgdown-blue.svg)](https://tosmartak.github.io/medmodr/)
 <!-- badges: end -->
 
 <!-- CRAN badges (uncomment once on CRAN)
