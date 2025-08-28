@@ -8,7 +8,17 @@
 [![R-CMD-check](https://github.com/tosmartak/medmodr/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/tosmartak/medmodr/actions/workflows/R-CMD-check.yaml)
 [![License: GPL
 v3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+[![Codecov test
+coverage](https://codecov.io/gh/tosmartak/medmodr/graph/badge.svg)](https://app.codecov.io/gh/tosmartak/medmodr)
+[![GitHub
+version](https://img.shields.io/github/r-package/v/tosmartak/medmodr)](https://github.com/tosmartak/medmodr)
 <!-- badges: end -->
+
+<!-- CRAN badges (uncomment once on CRAN)
+[![CRAN status](https://www.r-pkg.org/badges/version/medmodr)](https://CRAN.R-project.org/package=medmodr)
+[![CRAN downloads](https://cranlogs.r-pkg.org/badges/last-month/medmodr)](https://CRAN.R-project.org/package=medmodr)
+[![CRAN checks](https://badges.cranchecks.info/worst/medmodr.svg)](https://cran.r-project.org/web/checks/check_results_medmodr.html)
+-->
 
 Systematic moderation and mediation analysis in R.
 
@@ -117,39 +127,7 @@ knitr::kable(head(med_summary))
 | x1        | m2       | y1      | -0.0083915 |    -0.0394585 |     0.0139128 |   0.48 |  0.4625412 |    0.2779904 |    0.6254832 |  0.00 |    0.4541498 |             0.2710269 |             0.6105789 |           0.00 |    -0.0126784 |            -0.0971600 |             0.0277309 |           0.48 | FALSE         |
 | x1        | m2       | y2      | -0.0743946 |    -0.2051507 |     0.0185182 |   0.12 |  0.0516452 |   -0.1118692 |    0.1960140 |  0.53 |   -0.0227493 |            -0.2317083 |             0.1323458 |           0.81 |     0.5057719 |           -10.2314835 |             8.4874179 |           0.79 | FALSE         |
 
-#### Visual summaries for mediation
-
-These plots are fast for small tables but can be heavy on large scans,
-so we kept most of them eval=FALSE in README. Use them interactively in
-your analysis.
-
-**Effect overview plot (ACME, ADE, Total Effect with CIs):**
-
-By default, it would generate a summary grid plot for significant
-mediations only
-
-``` r
-plot_mediation_summary_effects(med_summary, filter_significant = TRUE, summary_plot = TRUE)
-```
-
-**You can also show only ACME plots from significant results**
-
-``` r
-plot_mediation_summary_effects(med_summary, filter_significant = TRUE, show_only_acme = TRUE, summary_plot = TRUE)
-```
-
-**You can equally loop over all significant mediation triples and plot
-each**
-
-``` r
-plot_mediation_summary_effects(med_summary, filter_significant = TRUE, summary_plot = FALSE)
-```
-
-**You can also show only ACME for single plots**
-
-``` r
-plot_mediation_summary_effects(med_summary, filter_significant = TRUE, summary_plot = FALSE, show_only_acme = TRUE)
-```
+## For more details and walkthrough: [`Getting started with medmodr`](https://tosmartak.github.io/medmodr/articles/getting-started.html)
 
 ## Function reference (quick)
 
@@ -162,14 +140,25 @@ plot_mediation_summary_effects(med_summary, filter_significant = TRUE, summary_p
 - `plot_mediation_summary_effects(summary_table, filter_significant = FALSE, show_only_acme = FALSE)`
   — visualize significant mediation results
 
-## License and issues
+## Contributing and Code of Conduct
+
+We welcome contributions! Please note that the medmodr project is
+released with a [Contributor Code of
+Conduct](https://tosmartak.github.io/medmodr/CODE_OF_CONDUCT.html). By
+contributing to this project, you agree to abide by its terms.
+
+Please check out:
+
+- [Contributing guidelines](.github/CONTRIBUTING.md)
+- [Code of Conduct](CODE_OF_CONDUCT.md)
+- [Open an issue](../../issues) (templates will guide you for bug
+  reports and feature requests)
+- [View issue templates](.github/ISSUE_TEMPLATE) (to preview them)
+
+## License
 
 - [![License: GPL
   v3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
-
-- Please file issues and feature requests on GitHub
-
-- Contributions welcome (add tests where possible)
 
 ## Citation
 
