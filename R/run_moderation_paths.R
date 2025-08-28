@@ -69,6 +69,7 @@ run_moderation_paths <- function(data, predictors, moderators, outcomes,
     stop("Supply at least one predictor, moderator, and outcome.", call. = FALSE)
   }
 
+  # Controls are optional; coerce to character and keep only those present
   if (!is.null(controls)) controls <- as.character(controls)
 
   if (!is.logical(plot_sig) || length(plot_sig) != 1) {
@@ -79,10 +80,15 @@ run_moderation_paths <- function(data, predictors, moderators, outcomes,
     stop("`summarize_categorical` must be a single logical (TRUE/FALSE).", call. = FALSE)
   }
 
-  all_vars <- unique(c(predictors, moderators, outcomes, controls))
-  missing <- setdiff(all_vars, names(data))
-  if (length(missing)) {
-    stop("Missing columns in `data`: ", paste(missing, collapse = ", "), call. = FALSE)
+  req_vars <- unique(c(predictors, moderators, outcomes))
+  missing_req <- setdiff(req_vars, names(data))
+  if (length(missing_req)) {
+    stop("Missing required columns in `data`: ", paste(missing_req, collapse = ", "), call. = FALSE)
+  }
+
+  # Controls are optional: keep only those present
+  if (!is.null(controls)) {
+    controls <- intersect(as.character(controls), names(data))
   }
 
   # Check numeric requirement for predictors, moderators, outcomes
@@ -96,8 +102,11 @@ run_moderation_paths <- function(data, predictors, moderators, outcomes,
     )
   }
 
+  all_vars <- unique(c(predictors, moderators, outcomes, controls))
+  present_vars <- intersect(all_vars, names(data))
+
   # Factor handling guidance
-  factor_vars <- names(Filter(is.factor, data[all_vars]))
+  factor_vars <- names(Filter(is.factor, data[present_vars]))
   if (length(factor_vars)) {
     message(
       "Note: Factor variables detected (", paste(factor_vars, collapse = ", "),
@@ -118,23 +127,27 @@ run_moderation_paths <- function(data, predictors, moderators, outcomes,
   # ------------------------------
   summary_list <- list()
 
+  bt <- function(v) paste0("`", v, "`") # helper for safe names
+
   for (predictor in predictors) {
     for (modx in moderators) {
-      if (predictor == modx) next # avoid self-interaction
+      if (identical(predictor, modx)) next # avoid self-interaction
 
       for (outcome in outcomes) {
+        # Drop overlapping controls for this model
         ctrl_vars <- setdiff(controls, c(predictor, modx))
 
         # ---- SAFE formula building ----
         rhs <- c(
-          paste0("`", predictor, "`*`", modx, "`"),
-          if (length(ctrl_vars)) paste0("`", ctrl_vars, "`")
+          paste0(bt(predictor), "*", bt(modx)),
+          if (length(ctrl_vars)) bt(ctrl_vars)
         )
-        formula_str <- paste(outcome, "~", paste(rhs, collapse = " + "))
-
+        # Backtick the LHS outcome as well
+        formula_str <- paste(bt(outcome), "~", paste(rhs, collapse = " + "))
         model_formula <- stats::as.formula(formula_str)
+
         model <- tryCatch(
-          stats::lm(model_formula, data = data),
+          stats::lm(model_formula, data = data, na.action = stats::na.exclude),
           error = function(e) {
             message("Model failed for: ", predictor, " x ", modx, " -> ", outcome)
             return(NULL)
@@ -144,6 +157,7 @@ run_moderation_paths <- function(data, predictors, moderators, outcomes,
 
         coef_summary <- summary(model)$coefficients
 
+        # Find interaction rows in coefficient table
         interaction_terms <- grep(
           paste0("(^|:)", predictor, ".*:", modx, "|", modx, ".*:", predictor),
           rownames(coef_summary),
@@ -153,7 +167,7 @@ run_moderation_paths <- function(data, predictors, moderators, outcomes,
         has_any_sig <- FALSE
 
         if (length(interaction_terms) > 0) {
-          if (summarize_categorical && length(interaction_terms) > 1) {
+          if (isTRUE(summarize_categorical) && length(interaction_terms) > 1) {
             effects <- coef_summary[interaction_terms, "Estimate"]
             ses <- coef_summary[interaction_terms, "Std. Error"]
             tvals <- coef_summary[interaction_terms, "t value"]
@@ -214,24 +228,25 @@ run_moderation_paths <- function(data, predictors, moderators, outcomes,
           tryCatch(
             {
               if (is.factor(data[[predictor]])) {
-                do.call(interactions::cat_plot, list(
+                p <- suppressWarnings(do.call(interactions::cat_plot, list(
                   model = model,
                   pred = predictor,
                   modx = modx,
                   data = data,
                   plot.points = FALSE,
                   main.title = paste0(predictor, " x ", modx, " -> ", outcome)
-                ))
+                )))
               } else {
-                do.call(interactions::interact_plot, list(
+                p <- suppressWarnings(do.call(interactions::interact_plot, list(
                   model = model,
                   pred = predictor,
                   modx = modx,
                   data = data,
                   plot.points = FALSE,
                   main.title = paste0(predictor, " x ", modx, " -> ", outcome)
-                ))
+                )))
               }
+              print(p)
             },
             error = function(e) {
               message("  Plot failed: ", e$message)

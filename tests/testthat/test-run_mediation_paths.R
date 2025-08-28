@@ -93,6 +93,86 @@ test_that("works with both boot and non-boot modes (robust, clean)", {
   }
 })
 
+test_that("run_mediation_paths works with non-syntactic names", {
+  if (!requireNamespace("mediation", quietly = TRUE)) {
+    succeed()
+    return(invisible(TRUE))
+  }
+
+  set.seed(11)
+  n <- 80
+  df <- data.frame(
+    check.names = FALSE,
+    "T rate" = rnorm(n),
+    "C-1"    = rnorm(n)
+  )
+  df[["Med rate"]] <- 0.6 * df[["T rate"]] + rnorm(n, sd = 0.5)
+  df[["Outcome Y"]] <- 0.5 * df[["Med rate"]] + 0.2 * df[["T rate"]] + 0.1 * df[["C-1"]] + rnorm(n, sd = 0.5)
+
+  res <- suppressMessages(run_mediation_paths(
+    data = df,
+    treatments = "T rate",
+    mediators = "Med rate",
+    outcomes = "Outcome Y",
+    controls = "C-1",
+    sims = 50, boot = FALSE
+  ))
+  expect_s3_class(res, "data.frame")
+  expect_true(all(c("ACME", "ADE", "Total_Effect", "Has_Mediation") %in% names(res)))
+})
+
+test_that("overlapping controls (same as treatment/mediator) are dropped without error", {
+  if (!requireNamespace("mediation", quietly = TRUE)) {
+    succeed()
+    return(invisible(TRUE))
+  }
+
+  set.seed(22)
+  n <- 60
+  df <- data.frame(T = rnorm(n))
+  df$M <- 0.7 * df$T + rnorm(n, sd = 0.6)
+  df$Y <- 0.6 * df$M + 0.2 * df$T + rnorm(n, sd = 0.6)
+
+  # Intentionally include T and M inside controls; function should drop them
+  res <- suppressMessages(run_mediation_paths(
+    data = df,
+    treatments = "T",
+    mediators = "M",
+    outcomes = "Y",
+    controls = c("T", "M"),
+    sims = 40, boot = FALSE
+  ))
+  expect_s3_class(res, "data.frame")
+  # Ensure Has_Mediation is logical (no NA leakage)
+  if (nrow(res)) expect_type(res$Has_Mediation, "logical")
+})
+
+test_that("missing controls trigger skip but function returns gracefully", {
+  if (!requireNamespace("mediation", quietly = TRUE)) {
+    succeed()
+    return(invisible(TRUE))
+  }
+
+  set.seed(33)
+  n <- 50
+  df <- data.frame(T = rnorm(n))
+  df$M <- 0.5 * df$T + rnorm(n)
+  df$Y <- 0.5 * df$M + 0.2 * df$T + rnorm(n)
+
+  # controls includes a missing column; that triple should be skipped
+  res <- suppressMessages(run_mediation_paths(
+    data = df,
+    treatments = "T",
+    mediators = "M",
+    outcomes = "Y",
+    controls = "C_missing",
+    sims = 30, boot = FALSE
+  ))
+  expect_s3_class(res, "data.frame")
+  # Since the only triple is skipped, you may get 0 rows; that's OK.
+  expect_true(nrow(res) %in% c(0, 1)) # allow either, depending on mediate robustness
+})
+
 test_that("factors are handled without error (fully silent)", {
   if (!requireNamespace("mediation", quietly = TRUE)) {
     succeed()

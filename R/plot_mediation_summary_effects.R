@@ -129,19 +129,20 @@ plot_mediation_summary_effects <- function(summary_table,
 
   if (isTRUE(summary_plot)) {
     # Return a single faceted plot (current behavior)
-    return(
-      ggplot2::ggplot(
-        data_long,
-        ggplot2::aes(x = Effect, y = Estimate, ymin = CI_Lower, ymax = CI_Upper, color = Effect)
+    p <- ggplot2::ggplot(
+      data_long,
+      ggplot2::aes(x = Effect, y = Estimate, ymin = CI_Lower, ymax = CI_Upper, color = Effect)
+    ) +
+      base_layers +
+      ggplot2::facet_grid(
+        rows = ggplot2::vars(Outcome),
+        cols = ggplot2::vars(Group),
+        scales = "free"
       ) +
-        base_layers +
-        ggplot2::facet_grid(
-          rows = ggplot2::vars(Outcome),
-          cols = ggplot2::vars(Group),
-          scales = "free"
-        ) +
-        ggplot2::labs(title = "Estimated Mediation Effects with 95% Confidence Intervals")
-    )
+      ggplot2::labs(title = "Estimated Mediation Effects with 95% Confidence Intervals")
+
+    print(p)
+    return(p)
   } else {
     # Return one plot per row (Outcome × Group)
     # Split by unique row identifiers from the original (pre-pivot) data
@@ -187,6 +188,8 @@ plot_mediation_summary_effects <- function(summary_table,
             k$Outcome, " | ", k$Group
           )
         )
+
+      print(p_i)
 
       plots[[i]] <- p_i
     }

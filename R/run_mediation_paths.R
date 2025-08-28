@@ -85,11 +85,16 @@ run_mediation_paths <- function(
     stop("Supply at least one treatment, mediator, and outcome.", call. = FALSE)
   }
 
-  all_vars <- unique(c(treatments, mediators, outcomes, controls))
-  missing <- setdiff(all_vars, names(data))
-  if (length(missing)) {
-    stop("Missing columns in `data`: ", paste(missing, collapse = ", "), call. = FALSE)
+  # Only mandatory vars are required globally; controls are handled per triple.
+  required_vars <- unique(c(treatments, mediators, outcomes))
+  missing_req <- setdiff(required_vars, names(data))
+  if (length(missing_req)) {
+    stop("Missing columns in `data`: ", paste(missing_req, collapse = ", "), call. = FALSE)
   }
+
+  # NEW: build the 'present' set safely (controls may be missing)
+  all_vars <- unique(c(treatments, mediators, outcomes, controls))
+  present_vars <- intersect(all_vars, names(data))
 
   # Check numeric requirement for mediation (treatments, mediators, outcomes should be numeric or factor)
   num_vars <- unique(c(treatments, mediators, outcomes))
@@ -102,11 +107,24 @@ run_mediation_paths <- function(
     )
   }
 
-  factor_vars <- names(Filter(is.factor, data[all_vars]))
+  # Factor handling — change data[all_vars] -> data[present_vars]
+  factor_vars <- names(Filter(is.factor, data[present_vars]))
   if (length(factor_vars)) {
     message(
       "Note: Factor variables detected (", paste(factor_vars, collapse = ", "),
       "). Ensure interpretation of factor levels is appropriate."
+    )
+  }
+
+  multi_factor <- names(Filter(
+    function(x) is.factor(data[[x]]) && nlevels(data[[x]]) > 2,
+    as.list(unique(c(treatments, mediators)))
+  ))
+  if (length(multi_factor)) {
+    message(
+      "Note: multi-level factors detected among treatments/mediators: ",
+      paste(multi_factor, collapse = ", "),
+      ". Consider recoding to binary or pass specific contrasts before mediation."
     )
   }
 
@@ -191,31 +209,41 @@ run_mediation_paths <- function(
         )
         if (is.null(res)) next
 
-        acme_sig <- is.finite(res$d0.p) && (res$d0.p < 0.05) &&
-          is.finite(res$d0.ci[1]) && is.finite(res$d0.ci[2]) &&
+        # helper: make numeric fields NA_real_ if missing/non-finite
+        safe_num <- function(x, i = NULL) {
+          val <- if (is.null(i)) x else x[i]
+          if (length(val) == 0L || !is.finite(val)) NA_real_ else as.numeric(val)
+        }
+
+        # before constructing the tibble, compute a robust acme_sig
+        acme_p_ok <- length(res$d0.p) == 1L && is.finite(res$d0.p)
+        acme_ci_ok <- length(res$d0.ci) >= 2L && all(is.finite(res$d0.ci[1:2]))
+        acme_sig <- acme_p_ok &&
+          res$d0.p < 0.05 &&
+          acme_ci_ok &&
           sign(res$d0.ci[1]) == sign(res$d0.ci[2])
 
         out_list[[length(out_list) + 1L]] <- tibble::tibble(
           Treatment = tr,
           Mediator = med,
           Outcome = y,
-          ACME = res$d0,
-          ACME_CI_Lower = res$d0.ci[1],
-          ACME_CI_Upper = res$d0.ci[2],
-          ACME_p = res$d0.p,
-          ADE = res$z0,
-          ADE_CI_Lower = res$z0.ci[1],
-          ADE_CI_Upper = res$z0.ci[2],
-          ADE_p = res$z0.p,
-          Total_Effect = res$tau.coef,
-          Total_Effect_CI_Lower = res$tau.ci[1],
-          Total_Effect_CI_Upper = res$tau.ci[2],
-          Total_Effect_p = res$tau.p,
-          Prop_Mediated = res$n0,
-          PropMediated_CI_Lower = res$n0.ci[1],
-          PropMediated_CI_Upper = res$n0.ci[2],
-          PropMediated_p = res$n0.p,
-          Has_Mediation = acme_sig
+          ACME = safe_num(res$d0),
+          ACME_CI_Lower = safe_num(res$d0.ci, 1),
+          ACME_CI_Upper = safe_num(res$d0.ci, 2),
+          ACME_p = safe_num(res$d0.p),
+          ADE = safe_num(res$z0),
+          ADE_CI_Lower = safe_num(res$z0.ci, 1),
+          ADE_CI_Upper = safe_num(res$z0.ci, 2),
+          ADE_p = safe_num(res$z0.p),
+          Total_Effect = safe_num(res$tau.coef),
+          Total_Effect_CI_Lower = safe_num(res$tau.ci, 1),
+          Total_Effect_CI_Upper = safe_num(res$tau.ci, 2),
+          Total_Effect_p = safe_num(res$tau.p),
+          Prop_Mediated = safe_num(res$n0),
+          PropMediated_CI_Lower = safe_num(res$n0.ci, 1),
+          PropMediated_CI_Upper = safe_num(res$n0.ci, 2),
+          PropMediated_p = safe_num(res$n0.p),
+          Has_Mediation = acme_sig # keep the single source of truth
         )
       }
     }
