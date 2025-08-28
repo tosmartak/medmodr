@@ -170,14 +170,14 @@ If you use medmodr in your research, please cite it:
 citation("medmodr")
 #> To cite medmodr in publications, please use:
 #> 
-#>   Akingbemisilu T (2025). _medmodr: Mediation and Moderation Workflows
-#>   in R_. R package version 0.1.0,
+#>   Akingbemisilu T (2025). _medmodr Package: Systematic moderation and
+#>   mediation analysis in R_. R package version 0.1.0,
 #>   <https://tosmartak.github.io/medmodr/>.
 #> 
 #> A BibTeX entry for LaTeX users is
 #> 
 #>   @Manual{,
-#>     title = {medmodr: Mediation and Moderation Workflows in R},
+#>     title = {medmodr Package: Systematic moderation and mediation analysis in R},
 #>     author = {Tosin Harold Akingbemisilu},
 #>     year = {2025},
 #>     note = {R package version 0.1.0},

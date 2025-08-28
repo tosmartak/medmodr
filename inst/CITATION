@@ -3,7 +3,7 @@ citHeader("To cite medmodr in publications, please use:")
 
 bibentry(
   bibtype = "Manual",
-  title   = "medmodr: Mediation and Moderation Workflows in R",
+  title   = "medmodr Package: Systematic moderation and mediation analysis in R",
   author  = person(given = "Tosin Harold", family = "Akingbemisilu",
                    email = "tosinakingbemisilu@gmail.com"),
   year    = "2025",
