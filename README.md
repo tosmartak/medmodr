@@ -9,7 +9,7 @@ v3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](https://www.gnu.org
 [![Codecov test
 coverage](https://codecov.io/gh/tosmartak/medmodr/graph/badge.svg)](https://app.codecov.io/gh/tosmartak/medmodr)
 [![GitHub
-version](https://img.shields.io/github/r-package/v/tosmartak/medmodr)](https://github.com/tosmartak/medmodr)
+version](https://img.shields.io/github/r-package/v/tosmartak/medmodr)](https://github.com/tosmartak/medmodr/)
 [![pkgdown
 site](https://img.shields.io/badge/docs-pkgdown-blue.svg)](https://tosmartak.github.io/medmodr/)
 <!-- badges: end -->
@@ -147,11 +147,15 @@ contributing to this project, you agree to abide by its terms.
 
 Please check out:
 
-- [Contributing guidelines](.github/CONTRIBUTING.md)
-- [Code of Conduct](CODE_OF_CONDUCT.md)
-- [Open an issue](../../issues) (templates will guide you for bug
-  reports and feature requests)
-- [View issue templates](.github/ISSUE_TEMPLATE) (to preview them)
+- [Contributing
+  guidelines](https://github.com/tosmartak/medmodr/blob/main/.github/CONTRIBUTING.md)
+- [Code of
+  Conduct](https://github.com/tosmartak/medmodr/blob/main/CODE_OF_CONDUCT.md)
+- [Open an issue](https://github.com/tosmartak/medmodr/issues)
+  (templates will guide you for bug reports and feature requests)
+- [View issue
+  templates](https://github.com/tosmartak/medmodr/tree/main/.github/ISSUE_TEMPLATE)
+  (to preview them)
 
 ## License
 
@@ -166,17 +170,17 @@ If you use medmodr in your research, please cite it:
 citation("medmodr")
 #> To cite medmodr in publications, please use:
 #> 
-#>   Akingbemisilu T (2025). _medmodr: Moderation and Mediation Path
-#>   Analysis in R_. R package version 0.1.0,
-#>   <https://tosmartak.github.io/medmodr>.
+#>   Akingbemisilu T (2025). _medmodr: Mediation and Moderation Workflows
+#>   in R_. R package version 0.1.0,
+#>   <https://tosmartak.github.io/medmodr/>.
 #> 
 #> A BibTeX entry for LaTeX users is
 #> 
 #>   @Manual{,
-#>     title = {medmodr: Moderation and Mediation Path Analysis in R},
+#>     title = {medmodr: Mediation and Moderation Workflows in R},
 #>     author = {Tosin Harold Akingbemisilu},
 #>     year = {2025},
 #>     note = {R package version 0.1.0},
-#>     url = {https://tosmartak.github.io/medmodr},
+#>     url = {https://tosmartak.github.io/medmodr/},
 #>   }
 ```

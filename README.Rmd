@@ -19,7 +19,7 @@ knitr::opts_chunk$set(
 [![R-CMD-check](https://github.com/tosmartak/medmodr/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/tosmartak/medmodr/actions/workflows/R-CMD-check.yaml)
 [![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![Codecov test coverage](https://codecov.io/gh/tosmartak/medmodr/graph/badge.svg)](https://app.codecov.io/gh/tosmartak/medmodr)
-[![GitHub version](https://img.shields.io/github/r-package/v/tosmartak/medmodr)](https://github.com/tosmartak/medmodr)
+[![GitHub version](https://img.shields.io/github/r-package/v/tosmartak/medmodr)](https://github.com/tosmartak/medmodr/)
 [![pkgdown site](https://img.shields.io/badge/docs-pkgdown-blue.svg)](https://tosmartak.github.io/medmodr/)
 <!-- badges: end -->
 
@@ -122,10 +122,10 @@ We welcome contributions! Please note that the medmodr project is released with 
 
 Please check out:
 
-- [Contributing guidelines](.github/CONTRIBUTING.md)
-- [Code of Conduct](CODE_OF_CONDUCT.md)
-- [Open an issue](../../issues) (templates will guide you for bug reports and feature requests)
-- [View issue templates](.github/ISSUE_TEMPLATE) (to preview them)
+- [Contributing guidelines](https://github.com/tosmartak/medmodr/blob/main/.github/CONTRIBUTING.md)
+- [Code of Conduct](https://github.com/tosmartak/medmodr/blob/main/CODE_OF_CONDUCT.md)
+- [Open an issue](https://github.com/tosmartak/medmodr/issues) (templates will guide you for bug reports and feature requests)
+- [View issue templates](https://github.com/tosmartak/medmodr/tree/main/.github/ISSUE_TEMPLATE) (to preview them)
 
 ## License
 
