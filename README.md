@@ -1,7 +1,7 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# medmodr Package: Iterated Moderation and Mediation Analysis at Scale
+# medmodr Package: Systematic moderation and mediation analysis in R.
 
 <!-- badges: start -->
 
@@ -19,8 +19,6 @@ version](https://img.shields.io/github/r-package/v/tosmartak/medmodr)](https://g
 [![CRAN downloads](https://cranlogs.r-pkg.org/badges/last-month/medmodr)](https://CRAN.R-project.org/package=medmodr)
 [![CRAN checks](https://badges.cranchecks.info/worst/medmodr.svg)](https://cran.r-project.org/web/checks/check_results_medmodr.html)
 -->
-
-Systematic moderation and mediation analysis in R.
 
 `medmodr` helps you scan multiple variable combinations for moderation
 and mediation effects without having to manually fit each model. It

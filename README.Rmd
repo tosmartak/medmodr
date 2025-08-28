@@ -15,7 +15,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-# medmodr Package: Iterated Moderation and Mediation Analysis at Scale
+# medmodr Package: Systematic moderation and mediation analysis in R.
 
 <!-- badges: start -->
 [![R-CMD-check](https://github.com/tosmartak/medmodr/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/tosmartak/medmodr/actions/workflows/R-CMD-check.yaml)
@@ -29,8 +29,6 @@ knitr::opts_chunk$set(
 [![CRAN downloads](https://cranlogs.r-pkg.org/badges/last-month/medmodr)](https://CRAN.R-project.org/package=medmodr)
 [![CRAN checks](https://badges.cranchecks.info/worst/medmodr.svg)](https://cran.r-project.org/web/checks/check_results_medmodr.html)
 -->
-
-Systematic moderation and mediation analysis in R. 
 
 `medmodr` helps you scan multiple variable combinations for moderation and mediation effects without having to manually fit each model. It provides tidy outputs and ready-to-publish visualizations. This package builds upon the [`mediation`](https://CRAN.R-project.org/package=mediation) package [Tingley et al., 2014] for mediation analysis and the [`interactions`](https://CRAN.R-project.org/package=interactions) package [Long, 2024] for moderation plots.
 
