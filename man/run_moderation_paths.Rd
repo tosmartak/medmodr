@@ -9,7 +9,7 @@ run_moderation_paths(
   predictors,
   moderators,
   outcomes,
-  controls,
+  controls = NULL,
   categorical_vars = NULL,
   sig_level = 0.05,
   plot_sig = FALSE,

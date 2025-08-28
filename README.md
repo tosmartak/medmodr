@@ -1,6 +1,4 @@
 
-<!-- README.md is generated from README.Rmd. Please edit that file -->
-
 # medmodr Package: Systematic moderation and mediation analysis in R.
 
 <!-- badges: start -->
@@ -88,14 +86,14 @@ The resulting dataset from our moderation analysis is shown below:
 knitr::kable(head(mod_summary))
 ```
 
-|                   | Predictor | Moderator | Outcome | Term        | Interaction_Effect | Std_Error |    T_value |   P_value |   CI_Lower |   CI_Upper | Has_Moderation |
-|:------------------|:----------|:----------|:--------|:------------|-------------------:|----------:|-----------:|----------:|-----------:|-----------:|:---------------|
-| …1                | x1        | m1        | y1      | x1:m1       |          0.4562917 | 0.0498605 |  9.1513655 | 0.0000000 |  0.3585651 |  0.5540183 | TRUE           |
-| …2                | x1        | m1        | y2      | x1:m1       |          0.0504688 | 0.0687074 |  0.7345471 | 0.4635023 | -0.0841977 |  0.1851354 | FALSE          |
-| …3                | x1        | grp       | y1      | x1:grptreat |         -0.4894794 | 0.1869071 | -2.6188375 | 0.0095200 | -0.8558173 | -0.1231414 | TRUE           |
-| …4                | x1        | grp       | y2      | x1:grptreat |          0.0983691 | 0.1979661 |  0.4968987 | 0.6198231 | -0.2896445 |  0.4863827 | FALSE          |
-| x1:edusecondary…5 | x1        | edu       | y1      | Summary     |          0.2194922 | 0.2411250 |  0.9102839 | 0.3638141 | -0.2531128 |  0.6920972 | FALSE          |
-| x1:edusecondary…6 | x1        | edu       | y2      | Summary     |         -0.3076175 | 0.2508876 | -1.2261170 | 0.2216563 | -0.7993572 |  0.1841221 | FALSE          |
+| Predictor | Moderator | Outcome | Term        | Interaction_Effect | Std_Error |    T_value |   P_value |   CI_Lower |   CI_Upper | Has_Moderation |
+|:----------|:----------|:--------|:------------|-------------------:|----------:|-----------:|----------:|-----------:|-----------:|:---------------|
+| x1        | m1        | y1      | x1:m1       |          0.4562917 | 0.0498605 |  9.1513655 | 0.0000000 |  0.3585651 |  0.5540183 | TRUE           |
+| x1        | m1        | y2      | x1:m1       |          0.0504688 | 0.0687074 |  0.7345471 | 0.4635023 | -0.0841977 |  0.1851354 | FALSE          |
+| x1        | grp       | y1      | x1:grptreat |         -0.4894794 | 0.1869071 | -2.6188375 | 0.0095200 | -0.8558173 | -0.1231414 | TRUE           |
+| x1        | grp       | y2      | x1:grptreat |          0.0983691 | 0.1979661 |  0.4968987 | 0.6198231 | -0.2896445 |  0.4863827 | FALSE          |
+| x1        | edu       | y1      | Summary     |          0.2194922 | 0.2411250 |  0.9102839 | 0.3638141 | -0.2531128 |  0.6920972 | FALSE          |
+| x1        | edu       | y2      | Summary     |         -0.3076175 | 0.2508876 | -1.2261170 | 0.2216563 | -0.7993572 |  0.1841221 | FALSE          |
 
 ### Mediation example
 

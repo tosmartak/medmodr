@@ -54,7 +54,8 @@
 #' }
 #'
 #' @export
-run_moderation_paths <- function(data, predictors, moderators, outcomes, controls,
+run_moderation_paths <- function(data, predictors, moderators, outcomes,
+                                 controls = NULL,
                                  categorical_vars = NULL,
                                  sig_level = 0.05,
                                  plot_sig = FALSE,
@@ -124,9 +125,12 @@ run_moderation_paths <- function(data, predictors, moderators, outcomes, control
       for (outcome in outcomes) {
         ctrl_vars <- setdiff(controls, c(predictor, modx))
 
-        formula_str <- paste(outcome, "~", paste(c(
-          paste0("`", predictor, "`*`", modx, "`"), paste0("`", ctrl_vars, "`")
-        ), collapse = " + "))
+        # ---- SAFE formula building ----
+        rhs <- c(
+          paste0("`", predictor, "`*`", modx, "`"),
+          if (length(ctrl_vars)) paste0("`", ctrl_vars, "`")
+        )
+        formula_str <- paste(outcome, "~", paste(rhs, collapse = " + "))
 
         model_formula <- stats::as.formula(formula_str)
         model <- tryCatch(
@@ -164,7 +168,7 @@ run_moderation_paths <- function(data, predictors, moderators, outcomes, control
 
             has_any_sig <- !is.na(p_val) && p_val < sig_level
 
-            summary_list[[paste(outcome, predictor, modx, sep = "_")]] <- data.frame(
+            summary_list[[paste(outcome, predictor, modx, sep = "_")]] <- tibble::tibble(
               Predictor = predictor,
               Moderator = modx,
               Outcome = outcome,
@@ -187,7 +191,7 @@ run_moderation_paths <- function(data, predictors, moderators, outcomes, control
               has_sig <- !is.na(p_val) && p_val < sig_level
               has_any_sig <- has_any_sig || has_sig
 
-              summary_list[[paste(outcome, predictor, modx, term, sep = "_")]] <- data.frame(
+              summary_list[[paste(outcome, predictor, modx, term, sep = "_")]] <- tibble::tibble(
                 Predictor = predictor,
                 Moderator = modx,
                 Outcome = outcome,
@@ -210,7 +214,7 @@ run_moderation_paths <- function(data, predictors, moderators, outcomes, control
           tryCatch(
             {
               if (is.factor(data[[predictor]])) {
-                p <- do.call(interactions::cat_plot, list(
+                do.call(interactions::cat_plot, list(
                   model = model,
                   pred = predictor,
                   modx = modx,
@@ -219,7 +223,7 @@ run_moderation_paths <- function(data, predictors, moderators, outcomes, control
                   main.title = paste0(predictor, " x ", modx, " -> ", outcome)
                 ))
               } else {
-                p <- do.call(interactions::interact_plot, list(
+                do.call(interactions::interact_plot, list(
                   model = model,
                   pred = predictor,
                   modx = modx,
@@ -228,7 +232,6 @@ run_moderation_paths <- function(data, predictors, moderators, outcomes, control
                   main.title = paste0(predictor, " x ", modx, " -> ", outcome)
                 ))
               }
-              print(p)
             },
             error = function(e) {
               message("  Plot failed: ", e$message)

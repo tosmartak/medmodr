@@ -31,12 +31,13 @@ jobs:
         run: covr::codecov()
         shell: Rscript {0}
 
-      - name: Show coverage summary (per file)
+      - name: Show coverage summary
         run: |
           Rscript -e 'cov <- covr::package_coverage();
+                      cat("\nOverall Coverage:\n");
                       print(cov);
-                      cat("\n\nCoverage Summary by File:\n");
-                      print(covr::shine(cov, browse = FALSE))'
+                      cat("\nCoverage by File:\n");
+                      print(covr::per_file(cov))'
         shell: bash
 
       - name: Show testthat output
@@ -45,10 +46,3 @@ jobs:
           ## --------------------------------------------------------------------
           find '${{ runner.temp }}/package' -name 'testthat.Rout*' -exec cat '{}' \; || true
         shell: bash
-
-      - name: Upload test results
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage-test-failures
-          path: ${{ runner.temp }}/package
