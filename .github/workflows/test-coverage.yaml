@@ -34,10 +34,22 @@ jobs:
       - name: Show coverage summary
         run: |
           Rscript -e 'cov <- covr::package_coverage();
-                      cat("\nOverall Coverage:\n");
-                      print(cov);
-                      cat("\nCoverage by File:\n");
-                      print(covr::per_file(cov))'
+                      cat("\nOverall Coverage:\n"); print(cov);
+                      df <- as.data.frame(cov);
+                      files <- split(df, df$filename)
+                      summ <- do.call(rbind, lapply(names(files), function(f) {
+                        d <- files[[f]]
+                        total <- nrow(d)
+                        covered <- sum(d$value > 0, na.rm = TRUE)
+                        data.frame(file = f,
+                                   coverage = sprintf("%.2f%%", 100 * covered / total),
+                                   covered = covered,
+                                   total = total,
+                                   stringsAsFactors = FALSE)
+                      }))
+                      ord <- order(as.numeric(sub("%","",summ$coverage)), decreasing = TRUE)
+                      summ <- summ[ord, ]
+                      cat("\nCoverage by File:\n"); print(summ, row.names = FALSE)'
         shell: bash
 
       - name: Show testthat output
