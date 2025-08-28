@@ -1,6 +1,6 @@
 Package: medmodr
 Title: Mediation and Moderation Modeling Utilities for R
-Version: 0.0.0.9000
+Version: 0.1.0
 Authors@R: person(given = "Tosin Harold", family = "Akingbemisilu", email = "tosinakingbemisilu@gmail.com", role = c("aut", "cre"), comment = c(ORCID = "https://orcid.org/0000-0002-0556-9955"))
 Description: Provides utilities to fit, summarize, visualize, and iterate mediation and moderation analyses, enabling users to efficiently scan multiple predictors, mediators, moderators, and outcomes within tidy workflows.
 License: GPL-2 | GPL-3
