@@ -17,7 +17,7 @@ knitr::opts_chunk$set(
 
 <!-- badges: start -->
 [![R-CMD-check](https://github.com/tosmartak/medmodr/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/tosmartak/medmodr/actions/workflows/R-CMD-check.yaml)
-[![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+[![License: GPL (>= 2)](https://img.shields.io/badge/license-GPL%20(>=2)-blue.svg)](https://www.gnu.org/licenses/gpl-2.0.html)
 [![Codecov test coverage](https://codecov.io/gh/tosmartak/medmodr/graph/badge.svg)](https://app.codecov.io/gh/tosmartak/medmodr)
 [![GitHub version](https://img.shields.io/github/r-package/v/tosmartak/medmodr)](https://github.com/tosmartak/medmodr/)
 [![pkgdown site](https://img.shields.io/badge/docs-pkgdown-blue.svg)](https://tosmartak.github.io/medmodr/)
@@ -59,10 +59,11 @@ library(medmodr)
 ```
 
 ## Example
-The package includes a small demo dataset `demo_medmodr`. Below we show one minimal moderation and mediation analysis.
+The package includes a small synthetic dataset `demo_medmodr` with multiple predictors, mediators, moderators, and outcomes, designed to demonstrate how to use the functions quickly.
 
 ```{r load-dataset}
 data("demo_medmodr")
+knitr::kable(head(demo_medmodr))
 ```
 
 ### Moderation example
@@ -96,7 +97,9 @@ med_summary <- run_mediation_paths(
   mediators = c("m1", "m2"),
   outcomes = c("y1", "y2"),
   controls = c("c1", "c2", "edu"),
-  sims = 200, boot = FALSE, seed = 1
+  sims = 20, # used 20 for faster run, you should set `sims = 1000–5000` and consider `boot = TRUE` for more robust estimates
+  boot = FALSE, # consider `boot = TRUE`
+  seed = 1
 )
 ```
 

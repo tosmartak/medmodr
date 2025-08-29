@@ -3,3 +3,8 @@
 export(plot_mediation_summary_effects)
 export(run_mediation_paths)
 export(run_moderation_paths)
+importFrom(dplyr,bind_rows)
+importFrom(stats,as.formula)
+importFrom(stats,lm)
+importFrom(stats,na.exclude)
+importFrom(tibble,tibble)

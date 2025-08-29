@@ -4,8 +4,8 @@
 <!-- badges: start -->
 
 [![R-CMD-check](https://github.com/tosmartak/medmodr/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/tosmartak/medmodr/actions/workflows/R-CMD-check.yaml)
-[![License: GPL
-v3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+[![License: GPL (\>=
+2)](https://img.shields.io/badge/license-GPL%20(%3E=2)-blue.svg)](https://www.gnu.org/licenses/gpl-2.0.html)
 [![Codecov test
 coverage](https://codecov.io/gh/tosmartak/medmodr/graph/badge.svg)](https://app.codecov.io/gh/tosmartak/medmodr)
 [![GitHub
@@ -59,12 +59,23 @@ library(medmodr)
 
 ## Example
 
-The package includes a small demo dataset `demo_medmodr`. Below we show
-one minimal moderation and mediation analysis.
+The package includes a small synthetic dataset `demo_medmodr` with
+multiple predictors, mediators, moderators, and outcomes, designed to
+demonstrate how to use the functions quickly.
 
 ``` r
 data("demo_medmodr")
+knitr::kable(head(demo_medmodr))
 ```
+
+|         x1 |         x2 |         m1 |         m2 |         c1 |         c2 | grp     | edu       |         y1 |         y2 |
+|-----------:|-----------:|-----------:|-----------:|-----------:|-----------:|:--------|:----------|-----------:|-----------:|
+|  1.3709584 | -2.0009292 |  2.4316793 | -1.4490405 |  0.6888078 |  2.3250585 | treat   | tertiary  |  4.4866832 | -0.5296494 |
+| -0.5646982 |  0.3337772 | -1.3210303 |  0.6225867 |  0.7250830 |  0.5241222 | control | tertiary  |  0.3903687 |  1.0376276 |
+|  0.3631284 |  1.1713251 |  0.3459897 |  1.6904484 |  0.2173802 |  0.9707334 | control | secondary |  0.3218529 |  0.6648226 |
+|  0.6328626 |  2.0595392 |  0.5553570 |  2.0712917 | -0.2016567 |  0.3769734 | treat   | tertiary  |  2.0106726 |  3.1052683 |
+|  0.4042683 | -1.3768616 | -0.2549411 | -1.4866388 | -1.3656899 | -0.9959334 | treat   | primary   |  0.2309061 | -0.5248641 |
+| -0.1061245 | -1.1508556 | -1.0836383 |  0.8735562 | -0.3089376 | -0.5974829 | control | secondary | -0.7814729 |  0.2024834 |
 
 ### Moderation example
 
@@ -106,7 +117,9 @@ med_summary <- run_mediation_paths(
   mediators = c("m1", "m2"),
   outcomes = c("y1", "y2"),
   controls = c("c1", "c2", "edu"),
-  sims = 200, boot = FALSE, seed = 1
+  sims = 20, # used 20 for faster run, you should set `sims = 1000–5000` and consider `boot = TRUE` for more robust estimates
+  boot = FALSE, # consider `boot = TRUE`
+  seed = 1
 )
 ```
 
@@ -118,12 +131,12 @@ knitr::kable(head(med_summary))
 
 | Treatment | Mediator | Outcome |       ACME | ACME_CI_Lower | ACME_CI_Upper | ACME_p |        ADE | ADE_CI_Lower | ADE_CI_Upper | ADE_p | Total_Effect | Total_Effect_CI_Lower | Total_Effect_CI_Upper | Total_Effect_p | Prop_Mediated | PropMediated_CI_Lower | PropMediated_CI_Upper | PropMediated_p | Has_Mediation |
 |:----------|:---------|:--------|-----------:|--------------:|--------------:|-------:|-----------:|-------------:|-------------:|------:|-------------:|----------------------:|----------------------:|---------------:|--------------:|----------------------:|----------------------:|---------------:|:--------------|
-| x1        | m1       | y1      |  0.4047129 |     0.2733835 |     0.5278130 |   0.00 |  0.0490381 |   -0.1419017 |    0.2103644 |  0.56 |    0.4537510 |             0.2788478 |             0.6174781 |           0.00 |     0.8879809 |             0.5922091 |             1.4236754 |           0.00 | TRUE          |
-| x1        | m1       | y2      |  0.0870821 |    -0.0337763 |     0.1964244 |   0.16 | -0.1090870 |   -0.3300890 |    0.0776391 |  0.31 |   -0.0220049 |            -0.2018976 |             0.1506394 |           0.80 |    -0.3005459 |           -11.9603192 |            13.4232514 |           0.86 | FALSE         |
-| x2        | m1       | y1      |  0.0024246 |    -0.1277854 |     0.1023357 |   0.91 |  0.0416984 |   -0.1272681 |    0.1958826 |  0.57 |    0.0441230 |            -0.1605703 |             0.2115216 |           0.60 |     0.1958763 |            -9.3779764 |             4.4197954 |           0.77 | FALSE         |
-| x2        | m1       | y2      | -0.0001291 |    -0.0223901 |     0.0151895 |   0.93 |  0.7079424 |    0.5375039 |    0.8634700 |  0.00 |    0.7078133 |             0.5269663 |             0.8660899 |           0.00 |     0.0004459 |            -0.0335334 |             0.0209049 |           0.93 | FALSE         |
-| x1        | m2       | y1      | -0.0083915 |    -0.0394585 |     0.0139128 |   0.48 |  0.4625412 |    0.2779904 |    0.6254832 |  0.00 |    0.4541498 |             0.2710269 |             0.6105789 |           0.00 |    -0.0126784 |            -0.0971600 |             0.0277309 |           0.48 | FALSE         |
-| x1        | m2       | y2      | -0.0743946 |    -0.2051507 |     0.0185182 |   0.12 |  0.0516452 |   -0.1118692 |    0.1960140 |  0.53 |   -0.0227493 |            -0.2317083 |             0.1323458 |           0.81 |     0.5057719 |           -10.2314835 |             8.4874179 |           0.79 | FALSE         |
+| x1        | m1       | y1      |  0.4377062 |     0.2712782 |     0.5561495 |    0.0 |  0.0196702 |   -0.1048360 |    0.1457572 |   0.9 |    0.4573765 |             0.3094468 |             0.6036864 |            0.0 |     0.9527539 |             0.7021084 |             1.3034933 |            0.0 | TRUE          |
+| x1        | m1       | y2      |  0.1153722 |    -0.0229650 |     0.2334151 |    0.3 | -0.1430786 |   -0.2871876 |    0.0028599 |   0.1 |   -0.0277065 |            -0.1736169 |             0.1336072 |            0.7 |    -0.2042186 |            -6.6634030 |            66.2261019 |            1.0 | FALSE         |
+| x2        | m1       | y1      |  0.0179415 |    -0.0783874 |     0.1021055 |    0.5 |  0.0243356 |   -0.0855415 |    0.1310880 |   0.7 |    0.0422771 |            -0.0858951 |             0.1720157 |            0.6 |     0.3210235 |            -4.6468356 |             1.7875704 |            0.7 | FALSE         |
+| x2        | m1       | y2      |  0.0031665 |    -0.0121681 |     0.0191415 |    0.6 |  0.6904284 |    0.5795941 |    0.7981109 |   0.0 |    0.6935949 |             0.5828137 |             0.8045308 |            0.0 |     0.0039813 |            -0.0166915 |             0.0251326 |            0.6 | FALSE         |
+| x1        | m2       | y1      | -0.0082691 |    -0.0345748 |     0.0135654 |    0.5 |  0.4426967 |    0.3073049 |    0.5718144 |   0.0 |    0.4344276 |             0.3039848 |             0.5572924 |            0.0 |    -0.0184695 |            -0.0756975 |             0.0293382 |            0.5 | FALSE         |
+| x1        | m2       | y2      | -0.0624286 |    -0.1531276 |     0.0236876 |    0.2 |  0.0340628 |   -0.0858962 |    0.1484627 |   0.5 |   -0.0283659 |            -0.1571435 |             0.0912951 |            0.8 |     0.5374838 |            -2.9659636 |             3.2079808 |            0.6 | FALSE         |
 
 ## For more details and walkthrough: [`Getting started with medmodr`](https://tosmartak.github.io/medmodr/articles/getting-started.html)
 

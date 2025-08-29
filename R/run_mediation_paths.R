@@ -58,6 +58,9 @@
 #' }
 #' }
 #'
+#' @importFrom stats lm as.formula na.exclude
+#' @importFrom tibble tibble
+#' @importFrom dplyr bind_rows
 #' @export
 run_mediation_paths <- function(
     data,
@@ -69,7 +72,7 @@ run_mediation_paths <- function(
     boot = TRUE,
     seed = 123) {
   # ------------------------------
-  # Validation block
+  # Validation
   # ------------------------------
   if (!requireNamespace("mediation", quietly = TRUE)) {
     stop("Package 'mediation' is required for run_mediation_paths(). Install it first.", call. = FALSE)
@@ -92,13 +95,13 @@ run_mediation_paths <- function(
     stop("Missing columns in `data`: ", paste(missing_req, collapse = ", "), call. = FALSE)
   }
 
-  # NEW: build the 'present' set safely (controls may be missing)
+  # Build the 'present' set safely (controls may be missing)
   all_vars <- unique(c(treatments, mediators, outcomes, controls))
   present_vars <- intersect(all_vars, names(data))
 
-  # Check numeric requirement for mediation (treatments, mediators, outcomes should be numeric or factor)
+  # Numeric/factor check (warn only)
   num_vars <- unique(c(treatments, mediators, outcomes))
-  not_numeric <- num_vars[!sapply(data[num_vars], function(x) is.numeric(x) || is.factor(x))]
+  not_numeric <- num_vars[!vapply(data[num_vars], function(x) is.numeric(x) || is.factor(x), logical(1))]
   if (length(not_numeric)) {
     warning(
       "Non-numeric and non-factor variable(s) detected: ",
@@ -107,7 +110,7 @@ run_mediation_paths <- function(
     )
   }
 
-  # Factor handling — change data[all_vars] -> data[present_vars]
+  # Factor info messages
   factor_vars <- names(Filter(is.factor, data[present_vars]))
   if (length(factor_vars)) {
     message(
@@ -115,14 +118,13 @@ run_mediation_paths <- function(
       "). Ensure interpretation of factor levels is appropriate."
     )
   }
-
   multi_factor <- names(Filter(
     function(x) is.factor(data[[x]]) && nlevels(data[[x]]) > 2,
     as.list(unique(c(treatments, mediators)))
   ))
   if (length(multi_factor)) {
     message(
-      "Note: multi-level factors detected among treatments/mediators: ",
+      "Note: multi-level factors among treatments/mediators: ",
       paste(multi_factor, collapse = ", "),
       ". Consider recoding to binary or pass specific contrasts before mediation."
     )
@@ -131,28 +133,34 @@ run_mediation_paths <- function(
   # ------------------------------
   # Helper for safe formula building
   # ------------------------------
-  # helper: build safe formula strings and convert to formulas
   build_formula <- function(lhs, rhs_terms) {
     bt <- function(v) paste0("`", v, "`")
     rhs <- paste(bt(rhs_terms), collapse = " + ")
-    stats::as.formula(paste(bt(lhs), "~", rhs))
+    f <- stats::as.formula(paste(bt(lhs), "~", rhs))
+    # ensure a safe environment on the formula
+    environment(f) <- parent.frame()
+    f
+  }
+
+  # Helper: safe numeric extraction
+  safe_num <- function(x, i = NULL) {
+    val <- if (is.null(i)) x else x[i]
+    if (length(val) == 0L || !is.finite(val)) NA_real_ else as.numeric(val)
   }
 
   out_list <- list()
 
   # ------------------------------
-  # Core mediation loops
+  # Core loops
   # ------------------------------
-
   for (med in mediators) {
     for (tr in treatments) {
       if (identical(tr, med)) {
         message("Skipping redundant pair: ", tr, " used as both treatment and mediator")
         next
       }
-
       for (y in outcomes) {
-        # controls: drop duplicates and any that don't exist
+        # controls per triple: drop dups, self, and non-existent
         ctrl <- controls
         if (!is.null(ctrl)) {
           ctrl <- setdiff(unique(ctrl), c(tr, med))
@@ -166,56 +174,55 @@ run_mediation_paths <- function(
           next
         }
 
-        # mediator model: med ~ tr + ctrl
-        rhs_med <- c(tr, ctrl)
-        f_med <- build_formula(med, rhs_med)
+        # Formulas
+        f_med <- build_formula(med, c(tr, ctrl))
+        f_out <- build_formula(y, c(med, tr, ctrl))
 
-        # outcome model: y ~ med + tr + ctrl
-        rhs_out <- c(med, tr, ctrl)
-        f_out <- build_formula(y, rhs_out)
-
+        # Fit models
         med_model <- tryCatch(
-          stats::lm(f_med, data = data, na.action = stats::na.exclude),
+          stats::lm(formula = f_med, data = data, na.action = stats::na.exclude),
           error = function(e) {
             message("[WARN] mediator model failed: ", e$message)
-            return(NULL)
+            NULL
           }
         )
         if (is.null(med_model)) next
 
         out_model <- tryCatch(
-          stats::lm(f_out, data = data, na.action = stats::na.exclude),
+          stats::lm(formula = f_out, data = data, na.action = stats::na.exclude),
           error = function(e) {
             message("[WARN] outcome model failed: ", e$message)
-            return(NULL)
+            NULL
           }
         )
         if (is.null(out_model)) next
+
+        # *** Critical fix: overwrite stored call formulas so mediate() never looks for f_med/f_out ***
+        med_model$call$formula <- f_med
+        out_model$call$formula <- f_out
 
         message("Running: ", tr, " -> ", med, " -> ", y)
 
         res <- tryCatch(
           {
             set.seed(seed)
-            mediation::mediate(med_model, out_model,
-              treat = tr, mediator = med,
-              boot = boot, sims = sims
+            mediation::mediate(
+              model.m = med_model,
+              model.y = out_model,
+              treat = tr,
+              mediator = med,
+              boot = boot,
+              sims = sims
             )
           },
           error = function(e) {
             message("  [ERROR] mediate() failed: ", e$message)
-            return(NULL)
+            NULL
           }
         )
         if (is.null(res)) next
 
-        # helper: make numeric fields NA_real_ if missing/non-finite
-        safe_num <- function(x, i = NULL) {
-          val <- if (is.null(i)) x else x[i]
-          if (length(val) == 0L || !is.finite(val)) NA_real_ else as.numeric(val)
-        }
-
-        # before constructing the tibble, compute a robust acme_sig
+        # ACME significance flag (p < .05 and CI not crossing 0)
         acme_p_ok <- length(res$d0.p) == 1L && is.finite(res$d0.p)
         acme_ci_ok <- length(res$d0.ci) >= 2L && all(is.finite(res$d0.ci[1:2]))
         acme_sig <- acme_p_ok &&
@@ -243,7 +250,7 @@ run_mediation_paths <- function(
           PropMediated_CI_Lower = safe_num(res$n0.ci, 1),
           PropMediated_CI_Upper = safe_num(res$n0.ci, 2),
           PropMediated_p = safe_num(res$n0.p),
-          Has_Mediation = acme_sig # keep the single source of truth
+          Has_Mediation = acme_sig
         )
       }
     }
