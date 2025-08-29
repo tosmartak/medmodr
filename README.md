@@ -31,7 +31,7 @@ package \[Long, 2024\] for moderation plots.
 
 ## Learn more
 
-Full walkthrough with moderation, mediation, and plotting:
+**For full walkthrough with moderation, mediation, and plotting:**
 [`Getting started with medmodr`](https://tosmartak.github.io/medmodr/articles/getting-started.html)
 
 ## Installation
@@ -41,6 +41,7 @@ Full walkthrough with moderation, mediation, and plotting:
 You can install the released version of **medmodr** from CRAN with:
 
 ``` r
+# For CRAN installation once available
 install.packages("medmodr")
 ```
 
@@ -138,7 +139,7 @@ knitr::kable(head(med_summary))
 | x1        | m2       | y1      | -0.0082691 |    -0.0345748 |     0.0135654 |    0.5 |  0.4426967 |    0.3073049 |    0.5718144 |   0.0 |    0.4344276 |             0.3039848 |             0.5572924 |            0.0 |    -0.0184695 |            -0.0756975 |             0.0293382 |            0.5 | FALSE         |
 | x1        | m2       | y2      | -0.0624286 |    -0.1531276 |     0.0236876 |    0.2 |  0.0340628 |   -0.0858962 |    0.1484627 |   0.5 |   -0.0283659 |            -0.1571435 |             0.0912951 |            0.8 |     0.5374838 |            -2.9659636 |             3.2079808 |            0.6 | FALSE         |
 
-## For more details and walkthrough: [`Getting started with medmodr`](https://tosmartak.github.io/medmodr/articles/getting-started.html)
+### For more details and walkthrough: [`Getting started with medmodr`](https://tosmartak.github.io/medmodr/articles/getting-started.html)
 
 ## Function reference (quick)
 

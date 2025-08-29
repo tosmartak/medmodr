@@ -32,8 +32,7 @@ knitr::opts_chunk$set(
 `medmodr` helps you scan multiple variable combinations for moderation and mediation effects without having to manually fit each model. It provides tidy outputs and ready-to-publish visualizations. This package builds upon the [`mediation`](https://CRAN.R-project.org/package=mediation) package [Tingley et al., 2014] for mediation analysis and the [`interactions`](https://CRAN.R-project.org/package=interactions) package [Long, 2024] for moderation plots.
 
 ## Learn more
-Full walkthrough with moderation, mediation, and plotting:
-[`Getting started with medmodr`](https://tosmartak.github.io/medmodr/articles/getting-started.html)
+**For full walkthrough with moderation, mediation, and plotting:** [`Getting started with medmodr`](https://tosmartak.github.io/medmodr/articles/getting-started.html)
 
 ## Installation
 
@@ -42,6 +41,7 @@ Full walkthrough with moderation, mediation, and plotting:
 You can install the released version of **medmodr** from CRAN with:
 
 ```{r install-cran, eval=FALSE}
+# For CRAN installation once available
 install.packages("medmodr")
 ```
 
@@ -109,7 +109,8 @@ The resulting dataset from our mediation analysis is shown below:
 knitr::kable(head(med_summary))
 ```
 
-## For more details and walkthrough: [`Getting started with medmodr`](https://tosmartak.github.io/medmodr/articles/getting-started.html)
+
+### For more details and walkthrough: [`Getting started with medmodr`](https://tosmartak.github.io/medmodr/articles/getting-started.html)
 
 ## Function reference (quick)
 

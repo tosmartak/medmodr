@@ -238,7 +238,7 @@ By default, it filters to significant results and shows ACME, ADE, and Total Eff
 
 #### Overview Plot
 
-```{r plot-mediation-result-summary-all, fig.width=8, fig.height=6}
+```{r plot-mediation-result-summary-all}
 plot_mediation_summary_effects(med_summary,
   filter_significant = TRUE,
   summary_plot = TRUE
@@ -258,7 +258,7 @@ This produces a faceted plot with:
 
 Focus only on indirect (mediated) effects:
 
-```{r plot-mediation-result-summary-acme-only, fig.width=8, fig.height=6}
+```{r plot-mediation-result-summary-acme-only}
 plot_mediation_summary_effects(med_summary,
   filter_significant = TRUE,
   show_only_acme = TRUE,
@@ -270,7 +270,7 @@ plot_mediation_summary_effects(med_summary,
 
 Instead of a faceted grid, generate one plot per triple:
 
-```{r plot-mediation-result-per-pathway, fig.width=8, fig.height=6}
+```{r plot-mediation-result-per-pathway}
 plot_mediation_summary_effects(med_summary,
   filter_significant = TRUE,
   summary_plot = FALSE
@@ -279,7 +279,7 @@ plot_mediation_summary_effects(med_summary,
 
 You can also restrict these to ACME only:
 
-```{r plot-mediation-result-per-pathway-acme, fig.width=8, fig.height=6}
+```{r plot-mediation-result-per-pathway-acme}
 plot_mediation_summary_effects(med_summary,
   filter_significant = TRUE,
   summary_plot = FALSE,

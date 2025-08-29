@@ -1,3 +1,13 @@
+# ---- internal helper: print when interactive but not knitting ----
+.print_maybe <- function(x) {
+  is_knit <- isTRUE(getOption("knitr.in.progress"))
+  if (interactive() && !is_knit) {
+    print(x)
+    return(invisible(x)) # avoid duplicate console printing
+  }
+  x # in knitr (or non-interactive), just return the object; knitr will render it once
+}
+
 #' Plot ACME, ADE, and Total Effect with confidence intervals
 #'
 #' Creates either:
@@ -5,14 +15,11 @@
 #'   when `summary_plot = TRUE` (default), or
 #' - a list of single-row ggplots (one per Outcome × Group) when `summary_plot = FALSE`.
 #'
-#' Requires \pkg{ggplot2} and \pkg{tidyr}.
-#'
 #' @param summary_table Data frame from \code{run_mediation_paths()}.
 #' @param filter_significant Logical; if \code{TRUE}, keep only rows with \code{Has_Mediation == TRUE}.
 #' @param show_only_acme Logical; if \code{TRUE}, show only ACME.
 #' @param summary_plot Logical; if \code{TRUE} (default) return a single faceted plot.
 #'   If \code{FALSE}, return a named list of ggplot objects (one per row).
-#'   a list of plots per (Outcome × Treatment × Mediator).
 #'
 #' @return A ggplot object if \code{summary_plot = TRUE}; otherwise a named list of ggplot objects.
 #' @export
@@ -36,21 +43,14 @@ plot_mediation_summary_effects <- function(summary_table,
     "ACME_p", "ADE_p", "Total_Effect_p",
     "Has_Mediation"
   )
-
   missing <- setdiff(required_cols, names(summary_table))
   if (length(missing)) {
     stop("Missing required columns in `summary_table`: ", paste(missing, collapse = ", "), call. = FALSE)
   }
 
-  if (!is.logical(filter_significant) || length(filter_significant) != 1) {
-    stop("`filter_significant` must be a single logical value.", call. = FALSE)
-  }
-  if (!is.logical(show_only_acme) || length(show_only_acme) != 1) {
-    stop("`show_only_acme` must be a single logical value.", call. = FALSE)
-  }
-  if (!is.logical(summary_plot) || length(summary_plot) != 1) {
-    stop("`summary_plot` must be a single logical value.", call. = FALSE)
-  }
+  stopifnot(is.logical(filter_significant), length(filter_significant) == 1)
+  stopifnot(is.logical(show_only_acme), length(show_only_acme) == 1)
+  stopifnot(is.logical(summary_plot), length(summary_plot) == 1)
 
   # ------------------------------
   # Core logic
@@ -95,7 +95,6 @@ plot_mediation_summary_effects <- function(summary_table,
         Effect == "Total Effect" ~ Total_Effect_p < 0.05
       ),
       Group = paste(Treatment, "->", Mediator),
-      # keep a stable ordering of effect types
       Effect = factor(Effect, levels = c("ACME", "ADE", "Total Effect"))
     )
 
@@ -121,14 +120,11 @@ plot_mediation_summary_effects <- function(summary_table,
       axis.text.x = ggplot2::element_text(angle = 45, hjust = 1),
       panel.grid.minor = ggplot2::element_blank()
     ),
-    ggplot2::labs(
-      x = "Effect Type",
-      y = "Estimate"
-    )
+    ggplot2::labs(x = "Effect Type", y = "Estimate")
   )
 
   if (isTRUE(summary_plot)) {
-    # Return a single faceted plot (current behavior)
+    # Single faceted plot
     p <- ggplot2::ggplot(
       data_long,
       ggplot2::aes(x = Effect, y = Estimate, ymin = CI_Lower, ymax = CI_Upper, color = Effect)
@@ -141,12 +137,9 @@ plot_mediation_summary_effects <- function(summary_table,
       ) +
       ggplot2::labs(title = "Estimated Mediation Effects with 95% Confidence Intervals")
 
-    print(p)
-    return(p)
+    return(.print_maybe(p))
   } else {
-    # Return one plot per row (Outcome × Group)
-    # Split by unique row identifiers from the original (pre-pivot) data
-    # We use distinct combinations of Outcome, Treatment, Mediator to drive grouping
+    # One plot per (Outcome × Treatment × Mediator)
     keys <- data |>
       dplyr::transmute(
         .row_id = dplyr::row_number(),
@@ -155,10 +148,7 @@ plot_mediation_summary_effects <- function(summary_table,
       )
 
     plots <- vector("list", nrow(keys))
-    names(plots) <- paste0(
-      keys$.row_id, ": ",
-      keys$Outcome, " | ", keys$Group
-    )
+    names(plots) <- paste0(keys$.row_id, ": ", keys$Outcome, " | ", keys$Group)
 
     for (i in seq_len(nrow(keys))) {
       k <- keys[i, ]
@@ -169,29 +159,22 @@ plot_mediation_summary_effects <- function(summary_table,
         Mediator == k$Mediator
       )
 
-      # It's possible (though unlikely) for a key to be empty after show_only_acme filtering
       if (nrow(df_i) == 0L) {
         plots[[i]] <- ggplot2::ggplot() +
           ggplot2::theme_void()
         next
       }
 
-      p_i <-
-        ggplot2::ggplot(
-          df_i,
-          ggplot2::aes(x = Effect, y = Estimate, ymin = CI_Lower, ymax = CI_Upper, color = Effect)
-        ) +
+      p_i <- ggplot2::ggplot(
+        df_i,
+        ggplot2::aes(x = Effect, y = Estimate, ymin = CI_Lower, ymax = CI_Upper, color = Effect)
+      ) +
         base_layers +
         ggplot2::labs(
-          title = paste0(
-            "Estimated Mediation Effects (95% CI)\n",
-            k$Outcome, " | ", k$Group
-          )
+          title = paste0("Estimated Mediation Effects (95% CI)\n", k$Outcome, " | ", k$Group)
         )
 
-      print(p_i)
-
-      plots[[i]] <- p_i
+      plots[[i]] <- .print_maybe(p_i)
     }
 
     return(plots)

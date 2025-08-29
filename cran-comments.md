@@ -15,7 +15,7 @@
   - ubuntu-latest (R release)
 
 ## R CMD check results
-0 errors | 0 warnings | 1 note
+0 errors | 0 warnings | 0 note
 
 - **NOTE (CRAN incoming feasibility):** New submission.  
   This is the first CRAN release of **medmodr**.
